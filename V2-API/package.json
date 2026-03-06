@@ -1,0 +1,16 @@
+{
+  "name": "v2-api",
+  "version": "1.0.0",
+  "description": "Base path: `/api/vendor/gateway`",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.98.4",
+    "dotenv": "^17.3.1"
+  }
+}
