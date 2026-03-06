@@ -81,6 +81,23 @@ List available transport services.
 
 ---
 
+### `GET /api/vendor/gateway/tokens`
+
+Get supported tokens and their current prices/exchange rates.
+
+**Response:**
+```json
+{
+  "status": "00",
+  "data": [
+    { "token": "USDC", "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "decimal": 6 },
+    { "token": "USDT", "mint": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", "decimal": 6 }
+  ]
+}
+```
+
+---
+
 ### `POST /api/vendor/gateway/validate/elect/:batch`
 
 Validate a meter number before purchasing electricity.
@@ -118,7 +135,7 @@ secretkey: <vendor-secret-key>
   "payWith": "default",
   "data": {
     "pubKey": "User PublicKey",
-    "token": "Token(USDT,USDC)",
+    "token": "USDC",
     "amount": 500,
 
     "phoneNumber": "08012345678",

@@ -76,6 +76,13 @@ async function listTransportServices() {
   return result;
 }
 
+/** Get supported tokens with their mint addresses and decimals */
+async function getSupportedTokens() {
+  const result = await get("/tokens");
+  console.log("Supported tokens:", result.data);
+  return result;
+}
+
 /** Validate a meter number before purchasing electricity */
 async function validateMeter(meterNo: string, electId: string, batch: "01" | "02") {
   const result = await post(`/validate/elect/${batch}`, { meterNo, electId });
@@ -108,6 +115,7 @@ async function getTransactionById(id: string) {
 (async () => {
   // ── Lookup ──
   await checkNetwork("08012345678");
+  // await getSupportedTokens();
   // await listInternetPlans("01");
   // await listBetPlatforms();
   // await listCablePackages();

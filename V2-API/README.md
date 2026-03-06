@@ -123,6 +123,7 @@ ts-node utility.ts
 
 | Function | Description |
 |----------|-------------|
+| `getSupportedTokens()` | Get supported tokens, mint addresses, and decimals |
 | `checkNetwork(phone)` | Detect network for a phone number |
 | `listInternetPlans(batch)` | List data plans (`batch`: `01` or `02`) |
 | `listBetPlatforms()` | List betting platforms |
