@@ -104,21 +104,25 @@ ts-node paywith-example/index.ts
 ts-node paywith-example/index.ts
 ```
 
----
+### `utility.ts` — Lookup & History
 
-## Lookup Endpoints
+Lookup helpers (fetch valid product IDs and amounts before transacting) and transaction history:
 
-Use these before transacting to fetch valid IDs and amounts.
+```bash
+ts-node utility.ts
+```
 
-| Endpoint | Description |
+| Function | Description |
 |----------|-------------|
-| `GET /network-checker?phone=...` | Detect network for a phone number |
-| `GET /list/internet/:batch` | List data plans (`batch`: `01` or `02`) |
-| `GET /list/bet` | List betting platforms |
-| `GET /list/cable` | List cable TV packages |
-| `GET /list/elect/:batch` | List electricity providers |
-| `GET /list/transport` | List transport services |
-| `POST /validate/elect/:batch` | Validate meter number before electricity purchase |
+| `checkNetwork(phone)` | Detect network for a phone number |
+| `listInternetPlans(batch)` | List data plans (`batch`: `01` or `02`) |
+| `listBetPlatforms()` | List betting platforms |
+| `listCablePackages()` | List cable TV packages |
+| `listElectProviders(batch)` | List electricity providers |
+| `listTransportServices()` | List transport services |
+| `validateMeter(meterNo, electId, batch)` | Validate meter number before electricity purchase |
+| `getAllTransactions(ref)` | Retrieve all transactions by vendor ref name |
+| `getTransactionById(id)` | Retrieve a single transaction by ID |
 
 ---
 

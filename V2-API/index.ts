@@ -2,9 +2,12 @@
  * Vendor Gateway API — Usage Examples
  * Base URL: https://your-api-domain.com
  */
+import dotenv from "dotenv";
 
-const BASE_URL = "https://your-api-domain.com/api/vendor/gateway";
-const SECRET_KEY = "your-vendor-secret-key";
+dotenv.config();
+
+const BASE_URL = process.env.BASE_URL!;
+const SECRET_KEY = process.env.SECRET_KEY!;
 
 const headers = {
   "Content-Type": "application/json",
