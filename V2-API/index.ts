@@ -103,7 +103,7 @@ async function buyAirtime() {
       token: "USDC",
       amount: 500,
       phoneNumber: "08012345678",
-      networkId: "MTN",
+      networkId: "01",        // 01=MTN, 02=Glo, 03=9mobile, 04=Airtel
     },
   });
   // data: { id, transactionIx, token, tokenMint, amountInToken }
@@ -124,7 +124,7 @@ async function buyAirtimeTransfer() {
       token: "USDC",
       amount: 500,
       phoneNumber: "08012345678",
-      networkId: "MTN",
+      networkId: "01",        // 01=MTN, 02=Glo, 03=9mobile, 04=Airtel
     },
   });
   // data: { id, wallet, token, tokenMint, amountInToken }
@@ -149,7 +149,7 @@ async function buyData() {
       token: "USDC",
       amount: plan.prodAmount,
       phoneNumber: "08012345678",
-      networkId: "MTN",
+      networkId: "01",        // 01=MTN, 02=Glo, 03=9mobile, 04=Airtel
       prodId: plan.prodId,
       batch: "01",
     },

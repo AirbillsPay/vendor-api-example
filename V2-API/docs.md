@@ -122,7 +122,7 @@ secretkey: <vendor-secret-key>
     "amount": 500,
 
     "phoneNumber": "08012345678",
-    "networkId": "MTN",
+    "networkId": "01",
 
     "prodId": "plan-id",
     "meterNo": "12345678901",
@@ -145,6 +145,15 @@ secretkey: <vendor-secret-key>
 | Betting (`103`)  | `amount` (1,000–100,000 NGN), `customerId`, `prodId` |
 | Cable TV (`104`) | `amount`, `smartCardNo`, `phoneNumber`, `prodId` |
 | Transport (`105`)| `phoneNumber`, `amount`, `prodId` |
+
+**`networkId` values** (used for Airtime and Internet):
+
+| `networkId` | Network  |
+|-------------|----------|
+| `"01"`      | MTN      |
+| `"02"`      | Glo      |
+| `"03"`      | 9mobile  |
+| `"04"`      | Airtel   |
 
 **Response (`payWith: "default"`):**
 ```json

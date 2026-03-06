@@ -87,6 +87,15 @@ POST /transact  →  send amountInToken of token to wallet  →  POST /transact/
 
 All requests also require `pubKey` (user's wallet public key) and `token` (`USDT` or `USDC`).
 
+**`networkId` values** (Airtime and Internet):
+
+| `networkId` | Network  |
+|-------------|----------|
+| `"01"`      | MTN      |
+| `"02"`      | Glo      |
+| `"03"`      | 9mobile  |
+| `"04"`      | Airtel   |
+
 ---
 
 ## Examples

@@ -26,19 +26,20 @@ async function airtimeDefault() {
   try {
     // Step 1 — create the transaction
     // Response data shape: { id, transactionIx, token, tokenMint, amountInToken }
-    const { data } = await post("/transact", {
+    const { data, message } = await post("/transact", {
       productCode: "100",
       payWith: "default",
       data: {
-        pubKey: "user-wallet-public-key",
+        pubKey: "9V45GyY9AyMM5kYLzsvTZQfwm6ovzPK6oHXiaJbMCPoA",
         token: "USDT",         // 'USDT' or 'USDC'
         amount: 100,           // amount in NGN
         phoneNumber: "08012345678",
-        networkId: "MTN",
+        networkId: "01",
       },
     });
 
-    console.log("Transaction created:", data.id);
+    console.log("message:", message);
+    console.log("Transaction created:", data);
     console.log(`Pay ${data.amountInToken} ${data.token} (mint: ${data.tokenMint})`);
 
     // Step 2 — deserialize and sign data.transactionIx
@@ -100,11 +101,11 @@ export async function airtimeTransfer() {
       productCode: "100",
       payWith: "transfer",
       data: {
-        pubKey: "user-wallet-public-key",
+        pubKey: "",
         token: "USDT",         // 'USDT' or 'USDC'
         amount: 100,           // amount in NGN
         phoneNumber: "08012345678",
-        networkId: "MTN",
+        networkId: "01",
       },
     });
 
