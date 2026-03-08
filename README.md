@@ -66,5 +66,4 @@ ts-node paywith-example/index.ts
 
 ## Resources
 
-- Full API docs: https://documenter.getpostman.com/view/37588939/2sAYdbMXcB#f46e1c19-9f9a-4ee6-91cb-17ae6a477b12
-- Support: support@airbillspay.com
+- Support: support@airbills.org
