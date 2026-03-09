@@ -1,4 +1,4 @@
-# Vendor Gateway API
+#  AIRBILLS API Documentation
 
 Base path: `/api/vendor/gateway`
 
