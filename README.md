@@ -6,8 +6,8 @@ Code examples for integrating with the Airbills Vendor Gateway API. Pay bills (a
 
 As we move forward there will be changes in the documentation — to stay updated join our Telegram group: https://t.me/+tH4W4IWu4dc5ZTA0
 
-To get started you will need a Secret key, fill out the form below:
-https://forms.gle/B97HL8tCV5dYiaLM7
+To get started you will need a Secret key. Get yours from the dashboard:
+https://business.airbills.org/
 
 ---
 
