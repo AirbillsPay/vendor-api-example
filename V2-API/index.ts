@@ -6,8 +6,17 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const BASE_URL = process.env.BASE_URL!;
-const SECRET_KEY = process.env.SECRET_KEY!;
+if (!process.env.SECRET_KEY) {
+  console.error("Missing SECRET_KEY in .env — add your vendor secret key.");
+  process.exit(1);
+}
+if (!process.env.BASE_URL) {
+  console.error("Missing BASE_URL in .env — add the API base URL.");
+  process.exit(1);
+}
+
+const BASE_URL = process.env.BASE_URL;
+const SECRET_KEY = process.env.SECRET_KEY;
 
 const headers = {
   "Content-Type": "application/json",
@@ -39,9 +48,9 @@ async function checkNetwork(phone: string) {
   return get("/network-checker", { phone });
 }
 
-/** List available data plans (batch 01 or 02) */
-async function listInternetPlans(batch: "01" | "02") {
-  return get(`/list/internet/${batch}`);
+/** List available data plans */
+async function listInternetPlans() {
+  return get("/list/internet");
 }
 
 /** List available betting platforms */
@@ -55,8 +64,8 @@ async function listCablePackages() {
 }
 
 /** List electricity providers */
-async function listElectProviders(batch: "01" | "02") {
-  return get(`/list/elect/${batch}`);
+async function listElectProviders() {
+  return get("/list/elect");
 }
 
 /** List available transport services */
@@ -65,8 +74,8 @@ async function listTransportServices() {
 }
 
 /** Validate meter number before electricity purchase */
-async function validateMeter(meterNo: string, electId: string, batch: "01" | "02") {
-  return post(`/validate/elect/${batch}`, { meterNo, electId });
+async function validateMeter(meterNo: string, electId: string) {
+  return post("/validate/elect", { meterNo, electId });
 }
 
 // ─── Transactions ─────────────────────────────────────────────────────────────
@@ -138,7 +147,7 @@ async function buyAirtimeTransfer() {
 /** Buy data plan */
 async function buyData() {
   // 1. Pick a plan
-  const plans = await listInternetPlans("01");
+  const plans = await listInternetPlans();
   const plan = plans.data[0]; // pick the first plan
 
   const { data } = await createTransaction({
@@ -151,7 +160,6 @@ async function buyData() {
       phoneNumber: "08012345678",
       networkId: "01",        // 01=MTN, 02=Glo, 03=9mobile, 04=Airtel
       prodId: plan.prodId,
-      batch: "01",
     },
   });
   // data: { id, transactionIx, token, tokenMint, amountInToken }
@@ -164,7 +172,7 @@ async function buyData() {
 /** Pay electricity bill */
 async function payElectricity() {
   // 1. Validate meter
-  const validation = await validateMeter("12345678901", "EKEDC", "01");
+  const validation = await validateMeter("12345678901", "EKEDC");
   if (validation.status !== "00") {
     console.error("Invalid meter:", validation.message);
     return;
@@ -181,7 +189,6 @@ async function payElectricity() {
       electId: "EKEDC",
       prodId: "prepaid",
       phoneNumber: "08012345678",
-      batch: "01",
     },
   });
   // data: { id, transactionIx, token, tokenMint, amountInToken }

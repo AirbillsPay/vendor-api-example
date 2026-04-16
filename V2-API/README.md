@@ -79,8 +79,8 @@ POST /transact  →  send amountInToken of token to wallet  →  POST /transact/
 | Code  | Product      | Required Fields |
 |-------|-------------|-----------------|
 | `100` | Airtime      | `phoneNumber`, `networkId`, `amount` (50–50,000 NGN) |
-| `101` | Electricity  | `meterNo`, `electId`, `amount` (min 2,000 NGN), `prodId`, `batch` |
-| `102` | Internet     | `phoneNumber`, `networkId`, `amount`, `prodId`, `batch` |
+| `101` | Electricity  | `meterNo`, `electId`, `amount` (min 2,000 NGN), `prodId` |
+| `102` | Internet     | `phoneNumber`, `networkId`, `amount`, `prodId` |
 | `103` | Betting      | `customerId`, `prodId`, `amount` (1,000–100,000 NGN) |
 | `104` | Cable TV     | `smartCardNo`, `phoneNumber`, `prodId`, `amount` |
 | `105` | Transport    | `phoneNumber`, `prodId`, `amount` |
@@ -125,12 +125,12 @@ ts-node utility.ts
 |----------|-------------|
 | `getSupportedTokens()` | Get supported tokens, mint addresses, and decimals |
 | `checkNetwork(phone)` | Detect network for a phone number |
-| `listInternetPlans(batch)` | List data plans (`batch`: `01` or `02`) |
+| `listInternetPlans()` | List available data plans |
 | `listBetPlatforms()` | List betting platforms |
 | `listCablePackages()` | List cable TV packages |
-| `listElectProviders(batch)` | List electricity providers |
+| `listElectProviders()` | List electricity providers |
 | `listTransportServices()` | List transport services |
-| `validateMeter(meterNo, electId, batch)` | Validate meter number before electricity purchase |
+| `validateMeter(meterNo, electId)` | Validate meter number before electricity purchase |
 | `getAllTransactions(ref)` | Retrieve all transactions by vendor ref name |
 | `getTransactionById(id)` | Retrieve a single transaction by ID |
 
@@ -145,3 +145,4 @@ ts-node utility.ts
 | `03`   | Missing or invalid `secretkey` |
 | `04`   | Invalid input / unsupported `payWith` |
 | `06`   | Transaction already processed |
+| `07`   | Unknown
