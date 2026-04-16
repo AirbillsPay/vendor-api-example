@@ -41,10 +41,10 @@ async function airtimeDefault() {
       data: {
         pubKey: "9V45GyY9AyMM5kYLzsvTZQfwm6ovzPK6oHXiaJbMCPoA",
         token: "USDT",         // 'USDT' or 'USDC'
-        amount: 100,           // amount in NGN
+        amount: 10000,           // amount in NGN
         phoneNumber: "08012345678",
         networkId: "01",
-        fee: "100" // Optional
+        fee: 100 // Optional
       },
     });
 
