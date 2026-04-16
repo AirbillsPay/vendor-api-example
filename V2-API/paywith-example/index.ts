@@ -3,8 +3,17 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const SECRET_KEY = process.env.SECRET_KEY!;
-const BASE_URL = process.env.BASE_URL!;
+if (!process.env.SECRET_KEY) {
+  console.error("Missing SECRET_KEY in .env — add your vendor secret key.");
+  process.exit(1);
+}
+if (!process.env.BASE_URL) {
+  console.error("Missing BASE_URL in .env — add the API base URL.");
+  process.exit(1);
+}
+
+const SECRET_KEY = process.env.SECRET_KEY;
+const BASE_URL = process.env.BASE_URL;
 
 const headers = {
   "Content-Type": "application/json",
@@ -35,6 +44,7 @@ async function airtimeDefault() {
         amount: 100,           // amount in NGN
         phoneNumber: "08012345678",
         networkId: "01",
+        fee: "100" // Optional
       },
     });
 
@@ -49,8 +59,15 @@ async function airtimeDefault() {
 
     // ── Backend signing (Keypair) ──────────────────────────────────────────
     // Store your private key as a JSON array in the WALLET_PRIVATE_KEY env var.
+    if (!process.env.WALLET_PRIVATE_KEY) {
+      throw new Error(
+        "WALLET_PRIVATE_KEY is not set in your .env file.\n" +
+        "Add it as a JSON array of your Solana wallet secret key bytes:\n" +
+        "  WALLET_PRIVATE_KEY=[12,34,56,...]"
+      );
+    }
     const signer: Signer = Keypair.fromSecretKey(
-      new Uint8Array(JSON.parse(process.env.WALLET_PRIVATE_KEY!))
+      new Uint8Array(JSON.parse(process.env.WALLET_PRIVATE_KEY))
     );
     transaction.sign(signer);
 
