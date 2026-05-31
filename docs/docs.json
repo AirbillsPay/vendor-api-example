@@ -17,9 +17,17 @@
   },
   "navbar": {
     "primary": {
-        "href": "https://business.airbills.org",
-        "label": "Dashboard"
+      "type": "button",
+      "href": "https://business.airbills.org",
+      "label": "Dashboard"
+    },
+    "links": [
+      {
+        "type": "github",
+        "href": "https://github.com/airbillspay/vendor-api-example",
+        "label": "Github"
       }
+    ]
   },
   "navigation": {
     "tabs": [
