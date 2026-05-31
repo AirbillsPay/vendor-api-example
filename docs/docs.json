@@ -19,7 +19,11 @@
     "primary": {
       "type": "button",
       "href": "https://business.airbills.org",
-      "label": "Dashboard"
+      "label": "Dashboard",
+      "style": {
+        "backgroundColor": "#f78628",
+        "color": "#ffffff"
+      }
     },
     "links": [
       {
