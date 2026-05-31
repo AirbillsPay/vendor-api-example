@@ -3,8 +3,8 @@
   "name": "Airbills",
   "theme": "aspen",
   "logo": {
-    "light": "/docs/images/logopng.png",
-    "dark": "/docs/images/logopng.png"
+    "light": "https://raw.githubusercontent.com/AirbillsPay/vendor-api-example/refs/heads/main/docs/images/logopng.png",
+    "dark": "https://raw.githubusercontent.com/AirbillsPay/vendor-api-example/refs/heads/main/docs/images/logopng.png"
   },
   "favicon": {
     "light": "/docs/images/logo1jpeg.jpg",
