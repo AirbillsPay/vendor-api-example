@@ -1,5 +1,6 @@
 {
   "name": "Airbills",
+  "theme": "aspen",
   "navigation": [
     {
       "group": "API Reference",
