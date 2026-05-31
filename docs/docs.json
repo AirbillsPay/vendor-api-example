@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "name": "Airbills",
-  "theme": "luma",
+  "theme": "aspen",
   "logo": {
     "light": "/docs/images/logopng.png",
     "dark": "/docs/images/logopng.png"
