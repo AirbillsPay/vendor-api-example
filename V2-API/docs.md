@@ -43,13 +43,9 @@ Detect the mobile network for a phone number.
 
 ---
 
-### `GET /api/vendor/gateway/list/internet/:batch`
+### `GET /api/vendor/gateway/list/internet`
 
 List available data/internet plans.
-
-| Param   | Type | Values     |
-|---------|------|------------|
-| `batch` | path | `01`, `02` |
 
 ---
 
@@ -65,13 +61,9 @@ List available cable TV packages and prices.
 
 ---
 
-### `GET /api/vendor/gateway/list/elect/:batch`
+### `GET /api/vendor/gateway/list/elect`
 
 List available electricity providers.
-
-| Param   | Type | Values     |
-|---------|------|------------|
-| `batch` | path | `01`, `02` |
 
 ---
 
@@ -98,13 +90,9 @@ Get supported tokens and their current prices/exchange rates.
 
 ---
 
-### `POST /api/vendor/gateway/validate/elect/:batch`
+### `POST /api/vendor/gateway/validate/elect`
 
 Validate a meter number before purchasing electricity.
-
-| Param   | Type | Values     |
-|---------|------|------------|
-| `batch` | path | `01`, `02` |
 
 **Request Body:**
 ```json
@@ -146,8 +134,6 @@ secretkey: <vendor-secret-key>
     "electId": "EKEDC",
     "smartCardNo": "1234567890",
     "customerId": "betting-account-id",
-
-    "batch": "01"
   }
 }
 ```
@@ -157,8 +143,8 @@ secretkey: <vendor-secret-key>
 | Product          | Required Fields |
 |------------------|----------------|
 | Airtime (`100`)  | `phoneNumber`, `networkId`, `amount` (50–50,000 NGN) |
-| Electricity (`101`) | `meterNo`, `electId`, `amount` (min 2,000 NGN), `prodId`, `batch` |
-| Internet (`102`) | `phoneNumber`, `networkId`, `amount`, `prodId`, `batch` |
+| Electricity (`101`) | `meterNo`, `electId`, `amount` (min 2,000 NGN), `prodId` |
+| Internet (`102`) | `phoneNumber`, `networkId`, `amount`, `prodId` |
 | Betting (`103`)  | `amount` (1,000–100,000 NGN), `customerId`, `prodId` |
 | Cable TV (`104`) | `amount`, `smartCardNo`, `phoneNumber`, `prodId` |
 | Transport (`105`)| `phoneNumber`, `amount`, `prodId` |

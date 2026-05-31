@@ -41,9 +41,9 @@ async function checkNetwork(phone: string) {
   return result;
 }
 
-/** List available data/internet plans (batch: "01" or "02") */
-async function listInternetPlans(batch: "01" | "02") {
-  const result = await get(`/list/internet/${batch}`);
+/** List available data/internet plans  */
+async function listInternetPlans() {
+  const result = await get(`/list/internet`);
   console.log("Internet plans:", result.data);
   return result;
 }
@@ -62,9 +62,9 @@ async function listCablePackages() {
   return result;
 }
 
-/** List electricity providers (batch: "01" or "02") */
-async function listElectProviders(batch: "01" | "02") {
-  const result = await get(`/list/elect/${batch}`);
+/** List electricity providers () */
+async function listElectProviders() {
+  const result = await get(`/list/elect`);
   console.log("Electricity providers:", result.data);
   return result;
 }
@@ -84,8 +84,8 @@ async function getSupportedTokens() {
 }
 
 /** Validate a meter number before purchasing electricity */
-async function validateMeter(meterNo: string, electId: string, batch: "01" | "02") {
-  const result = await post(`/validate/elect/${batch}`, { meterNo, electId });
+async function validateMeter(meterNo: string, electId: string) {
+  const result = await post(`/validate/elect`, { meterNo, electId });
   if (result.status === "00") {
     console.log("Meter valid:", result.data);
   } else {
