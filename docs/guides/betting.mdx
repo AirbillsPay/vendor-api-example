@@ -1,10 +1,10 @@
 ---
-title: "Fund Betting Accounts via the AirbillsPay Vendor API"
+title: "Fund Betting Accounts via the Airbills Vendor API"
 sidebarTitle: "Betting"
-description: "Top up Bet9ja, Sportybet, and other betting wallet accounts for your users via AirbillsPay. Covers platform lookup and transaction flow with code examples."
+description: "Top up Bet9ja, Sportybet, and other betting wallet accounts for your users via Airbills. Covers platform lookup and transaction flow with code examples."
 ---
 
-AirbillsPay lets you fund your users' betting accounts on platforms like Bet9ja, Sportybet, and others — all paid in USDT or USDC on Solana. Your users never need to manage naira bank transfers; they simply approve a Solana transaction and the credit lands in their betting wallet. Fetch the live list of supported platforms to get valid `prodId` values before submitting any transaction.
+Airbills lets you fund your users' betting accounts on platforms like Bet9ja, Sportybet, and others — all paid in USDT or USDC on Solana. Your users never need to manage naira bank transfers; they simply approve a Solana transaction and the credit lands in their betting wallet. Fetch the live list of supported platforms to get valid `prodId` values before submitting any transaction.
 
 ## Product Details
 
@@ -121,7 +121,7 @@ AirbillsPay lets you fund your users' betting accounts on platforms like Bet9ja,
       throw new Error('On-chain transaction failed');
     }
 
-    // Notify AirbillsPay to process the top-up
+    // Notify Airbills to process the top-up
     const result = await fetch(`${BASE_URL}/transact/process`, {
       method: 'POST',
       headers,

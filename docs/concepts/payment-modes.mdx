@@ -1,10 +1,10 @@
 ---
 title: "Payment Modes: Default vs. Transfer Mode Explained"
 sidebarTitle: "Payment Modes"
-description: "AirbillsPay supports two payment modes: default (sign a Solana transaction) and transfer (send tokens to a deposit address). Learn when to use each."
+description: "Airbills supports two payment modes: default (sign a Solana transaction) and transfer (send tokens to a deposit address). Learn when to use each."
 ---
 
-AirbillsPay gives you two ways to settle the on-chain payment for any bill: **default mode**, where your server signs and submits a Solana transaction directly, and **transfer mode**, where the user sends tokens to a deposit address using their own wallet. Both modes share the same two-step lifecycle — create a transaction with `/transact`, settle on-chain, then call `/transact/process` to fulfill the bill — but the on-chain step works differently depending on which mode you choose.
+Airbills gives you two ways to settle the on-chain payment for any bill: **default mode**, where your server signs and submits a Solana transaction directly, and **transfer mode**, where the user sends tokens to a deposit address using their own wallet. Both modes share the same two-step lifecycle — create a transaction with `/transact`, settle on-chain, then call `/transact/process` to fulfill the bill — but the on-chain step works differently depending on which mode you choose.
 
 ## Default Mode
 
@@ -97,7 +97,7 @@ Use this table to decide which mode fits your integration:
 
 ## Supported Tokens
 
-AirbillsPay accepts **USDT** and **USDC** on Solana mainnet. Pass the token symbol as the `token` field in your `/transact` request. Both tokens use 6 decimal places.
+Airbills accepts **USDT** and **USDC** on Solana mainnet. Pass the token symbol as the `token` field in your `/transact` request. Both tokens use 6 decimal places.
 
 | Token | Mint Address | Decimals |
 |-------|--------------|----------|

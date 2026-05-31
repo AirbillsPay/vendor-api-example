@@ -1,10 +1,10 @@
 ---
-title: "Quickstart: Pay Your First Bill with AirbillsPay API"
+title: "Quickstart: Pay Your First Bill with Airbills API"
 sidebarTitle: "Quickstart"
-description: "Make your first AirbillsPay vendor API call: initiate a transaction with POST /transact, then process it with POST /transact/process."
+description: "Make your first Airbills vendor API call: initiate a transaction with POST /transact, then process it with POST /transact/process."
 ---
 
-This guide walks you through paying your first Nigerian utility bill using the AirbillsPay vendor API. You'll initiate an airtime purchase with `POST /transact`, sign the resulting Solana transaction, and finalise the payment with `POST /transact/process`. The entire flow takes under five minutes once you have your secret key in hand.
+This guide walks you through paying your first Nigerian utility bill using the Airbills vendor API. You'll initiate an airtime purchase with `POST /transact`, sign the resulting Solana transaction, and finalise the payment with `POST /transact/process`. The entire flow takes under five minutes once you have your secret key in hand.
 
 ## Prerequisites
 
@@ -74,7 +74,7 @@ Before you begin, make sure you have:
   </Step>
 
   <Step title="Process the transaction">
-    Call `POST /transact/process` with the product code and the `id` returned in step 3. AirbillsPay verifies the on-chain payment and delivers the bill.
+    Call `POST /transact/process` with the product code and the `id` returned in step 3. Airbills verifies the on-chain payment and delivers the bill.
 
     ```typescript
     const result = await fetch(`${process.env.BASE_URL}/transact/process`, {
@@ -108,7 +108,7 @@ Before you begin, make sure you have:
 </Steps>
 
 <Tip>
-  If you don't want your server to sign Solana transactions, use `payWith: "transfer"` instead. AirbillsPay will return a deposit address, and the user can send the required USDT or USDC directly from their own wallet. See the [payment modes](/concepts/payment-modes) guide for details.
+  If you don't want your server to sign Solana transactions, use `payWith: "transfer"` instead. Airbills will return a deposit address, and the user can send the required USDT or USDC directly from their own wallet. See the [payment modes](/concepts/payment-modes) guide for details.
 </Tip>
 
 ## Next steps

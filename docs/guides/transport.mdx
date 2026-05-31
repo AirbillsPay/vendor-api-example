@@ -1,10 +1,10 @@
 ---
-title: "Purchase Transport Tickets via the AirbillsPay API"
+title: "Purchase Transport Tickets via the Airbills API"
 sidebarTitle: "Transport"
-description: "Buy transport tickets and top up transit accounts for your users via AirbillsPay. Covers listing available services and submitting transport payments."
+description: "Buy transport tickets and top up transit accounts for your users via Airbills. Covers listing available services and submitting transport payments."
 ---
 
-AirbillsPay enables you to purchase transport tickets and top up transit accounts for your users, all settled in USDT or USDC on Solana. Whether your users need a bus pass or a transit wallet top-up, AirbillsPay handles the NGN conversion and delivery. Always fetch the live list of available transport services to get the correct `prodId` and pricing before initiating a transaction.
+Airbills enables you to purchase transport tickets and top up transit accounts for your users, all settled in USDT or USDC on Solana. Whether your users need a bus pass or a transit wallet top-up, Airbills handles the NGN conversion and delivery. Always fetch the live list of available transport services to get the correct `prodId` and pricing before initiating a transaction.
 
 ## Product Details
 
@@ -127,7 +127,7 @@ AirbillsPay enables you to purchase transport tickets and top up transit account
       throw new Error('On-chain transaction failed');
     }
 
-    // Notify AirbillsPay to process delivery
+    // Notify Airbills to process delivery
     const result = await fetch(`${BASE_URL}/transact/process`, {
       method: 'POST',
       headers,

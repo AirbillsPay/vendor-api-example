@@ -1,10 +1,10 @@
 ---
-title: "Send Mobile Airtime via the AirbillsPay Vendor API"
+title: "Send Mobile Airtime via the Airbills Vendor API"
 sidebarTitle: "Airtime"
-description: "Top up airtime for MTN, Glo, 9mobile, and Airtel via AirbillsPay. Covers network detection, default signing, and transfer modes with code examples."
+description: "Top up airtime for MTN, Glo, 9mobile, and Airtel via Airbills. Covers network detection, default signing, and transfer modes with code examples."
 ---
 
-The AirbillsPay vendor API lets you top up airtime for any Nigerian mobile subscriber in seconds. Your users pay with USDT or USDC on the Solana blockchain, and AirbillsPay handles the conversion and delivery to the recipient's phone — no naira wallets or bank accounts required.
+The Airbills vendor API lets you top up airtime for any Nigerian mobile subscriber in seconds. Your users pay with USDT or USDC on the Solana blockchain, and Airbills handles the conversion and delivery to the recipient's phone — no naira wallets or bank accounts required.
 
 ## Product Details
 
@@ -126,7 +126,7 @@ The AirbillsPay vendor API lets you top up airtime for any Nigerian mobile subsc
   </Step>
 
   <Step title="Process the transaction">
-    Once the on-chain transaction is confirmed, notify AirbillsPay to deliver the airtime by calling `/transact/process`.
+    Once the on-chain transaction is confirmed, notify Airbills to deliver the airtime by calling `/transact/process`.
 
     ```typescript
     const result = await fetch(`${BASE_URL}/transact/process`, {

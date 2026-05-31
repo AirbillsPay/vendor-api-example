@@ -1,10 +1,10 @@
 ---
-title: "Pay Cable TV Subscriptions via the AirbillsPay API"
+title: "Pay Cable TV Subscriptions via the Airbills API"
 sidebarTitle: "Cable TV"
-description: "Renew DStv, GOtv, Startimes, and other cable TV subscriptions for your users using AirbillsPay. List packages, get product IDs, and submit payments."
+description: "Renew DStv, GOtv, Startimes, and other cable TV subscriptions for your users using Airbills. List packages, get product IDs, and submit payments."
 ---
 
-AirbillsPay lets you renew cable TV subscriptions for your users without handling naira payments. Your users pay in USDT or USDC on Solana, and AirbillsPay credits the subscription directly to their smart card. Supported providers include DStv, GOtv, Startimes, and more. Always fetch the live package list to get accurate plan IDs and pricing before initiating a transaction.
+Airbills lets you renew cable TV subscriptions for your users without handling naira payments. Your users pay in USDT or USDC on Solana, and Airbills credits the subscription directly to their smart card. Supported providers include DStv, GOtv, Startimes, and more. Always fetch the live package list to get accurate plan IDs and pricing before initiating a transaction.
 
 ## Product Details
 
@@ -131,7 +131,7 @@ AirbillsPay lets you renew cable TV subscriptions for your users without handlin
       throw new Error('On-chain transaction failed');
     }
 
-    // Notify AirbillsPay to process the subscription
+    // Notify Airbills to process the subscription
     const result = await fetch(`${BASE_URL}/transact/process`, {
       method: 'POST',
       headers,

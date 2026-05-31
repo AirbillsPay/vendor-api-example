@@ -4,7 +4,7 @@ sidebarTitle: "POST /transact/process"
 description: "POST /api/vendor/gateway/transact/process — fulfills a pending transaction after on-chain payment, triggering bill payment with the utility provider."
 ---
 
-After settling payment on-chain — either by signing and submitting the Solana transaction returned in default mode, or by transferring tokens to the deposit address returned in transfer mode — call this endpoint to trigger the actual bill payment. AirbillsPay verifies the on-chain payment, then fulfills the bill with the Nigerian utility provider. This is a required second step; calling `/transact` alone does not pay the bill.
+After settling payment on-chain — either by signing and submitting the Solana transaction returned in default mode, or by transferring tokens to the deposit address returned in transfer mode — call this endpoint to trigger the actual bill payment. Airbills verifies the on-chain payment, then fulfills the bill with the Nigerian utility provider. This is a required second step; calling `/transact` alone does not pay the bill.
 
 ## Endpoint
 

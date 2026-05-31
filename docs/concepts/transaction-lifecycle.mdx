@@ -1,10 +1,10 @@
 ---
-title: "AirbillsPay Transaction Lifecycle and Status Codes"
+title: "Airbills Transaction Lifecycle and Status Codes"
 sidebarTitle: "Transaction Lifecycle"
-description: "Learn the two-step AirbillsPay flow: create a transaction with /transact, settle the Solana payment, then call /transact/process to fulfill the bill."
+description: "Learn the two-step Airbills flow: create a transaction with /transact, settle the Solana payment, then call /transact/process to fulfill the bill."
 ---
 
-Every AirbillsPay bill payment follows a two-step lifecycle: first you create a pending transaction that returns the on-chain payment instruction, then — after the payment settles on Solana — you process it to trigger the actual bill fulfillment. Understanding this flow is essential for building a reliable integration, handling errors gracefully, and communicating accurate status to your users.
+Every Airbills bill payment follows a two-step lifecycle: first you create a pending transaction that returns the on-chain payment instruction, then — after the payment settles on Solana — you process it to trigger the actual bill fulfillment. Understanding this flow is essential for building a reliable integration, handling errors gracefully, and communicating accurate status to your users.
 
 ## The Two-Step Flow
 
@@ -57,7 +57,7 @@ Bill fulfilled         → vendorstatus: "completed"
     }
     ```
 
-    This triggers AirbillsPay's bill payment API call to the relevant utility provider. On success, `vendorstatus` becomes `"completed"` and the bill is fulfilled.
+    This triggers Airbills's bill payment API call to the relevant utility provider. On success, `vendorstatus` becomes `"completed"` and the bill is fulfilled.
   </Step>
 </Steps>
 

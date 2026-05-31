@@ -4,7 +4,7 @@ sidebarTitle: "POST /transact"
 description: "POST /api/vendor/gateway/transact — initiate a bill payment. Returns a Solana transaction to sign or a deposit address for token transfer."
 ---
 
-This is the primary endpoint for initiating bill payments on AirbillsPay. You POST the product details and your chosen payment mode; the API responds with the payment instruction you need to complete on-chain. Once you receive the response, proceed to sign and submit the transaction (default mode) or transfer tokens to the provided address (transfer mode), then call `/transact/process` to trigger the actual bill fulfillment.
+This is the primary endpoint for initiating bill payments on Airbills. You POST the product details and your chosen payment mode; the API responds with the payment instruction you need to complete on-chain. Once you receive the response, proceed to sign and submit the transaction (default mode) or transfer tokens to the provided address (transfer mode), then call `/transact/process` to trigger the actual bill fulfillment.
 
 ## Endpoint
 

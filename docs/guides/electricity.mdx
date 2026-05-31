@@ -1,10 +1,10 @@
 ---
-title: "Pay Electricity Bills via the AirbillsPay Vendor API"
+title: "Pay Electricity Bills via the Airbills Vendor API"
 sidebarTitle: "Electricity"
-description: "Purchase prepaid or postpaid electricity tokens for any Nigerian DISCO using AirbillsPay. Covers meter validation, provider lookup, and code examples."
+description: "Purchase prepaid or postpaid electricity tokens for any Nigerian DISCO using Airbills. Covers meter validation, provider lookup, and code examples."
 ---
 
-AirbillsPay lets you purchase electricity tokens for your users across all major Nigerian distribution companies (DISCOs). Your users pay in USDT or USDC on Solana, and AirbillsPay handles delivery of the prepaid token or postpaid credit directly to the meter. Always validate the meter number and look up the provider ID before initiating a transaction to avoid failed payments.
+Airbills lets you purchase electricity tokens for your users across all major Nigerian distribution companies (DISCOs). Your users pay in USDT or USDC on Solana, and Airbills handles delivery of the prepaid token or postpaid credit directly to the meter. Always validate the meter number and look up the provider ID before initiating a transaction to avoid failed payments.
 
 ## Product Details
 
@@ -46,7 +46,7 @@ AirbillsPay lets you purchase electricity tokens for your users across all major
     ```
 
     <Note>
-      Always fetch this list dynamically rather than hardcoding provider IDs. AirbillsPay may add or update providers at any time.
+      Always fetch this list dynamically rather than hardcoding provider IDs. Airbills may add or update providers at any time.
     </Note>
   </Step>
 
@@ -113,7 +113,7 @@ AirbillsPay lets you purchase electricity tokens for your users across all major
   </Step>
 
   <Step title="Sign, submit, and process the transaction">
-    Deserialize `data.transactionIx`, have the user sign it with their Solana wallet, broadcast it to the network, and then notify AirbillsPay to deliver the electricity token.
+    Deserialize `data.transactionIx`, have the user sign it with their Solana wallet, broadcast it to the network, and then notify Airbills to deliver the electricity token.
 
     ```typescript
     import {
@@ -142,7 +142,7 @@ AirbillsPay lets you purchase electricity tokens for your users across all major
       throw new Error('On-chain transaction failed');
     }
 
-    // Notify AirbillsPay to process delivery
+    // Notify Airbills to process delivery
     const result = await fetch(`${BASE_URL}/transact/process`, {
       method: 'POST',
       headers,
