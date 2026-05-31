@@ -1,0 +1,70 @@
+---
+title: "Supported Tokens — Mint Addresses and Decimal Precision"
+sidebarTitle: "Tokens"
+description: "GET /api/vendor/gateway/tokens — returns all supported payment tokens (USDT, USDC) with their Solana mint addresses and decimal precision."
+---
+
+Call this endpoint to retrieve the list of tokens accepted by AirbillsPay, including their Solana mint addresses and decimal precision values. You need these mint addresses and decimal values when constructing on-chain payment transactions — always fetch them dynamically rather than hardcoding them to stay up to date with any future token additions.
+
+## Endpoint
+
+```
+GET /api/vendor/gateway/tokens
+```
+
+## Request
+
+### Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `secretkey` | ✓ | Your vendor secret key |
+
+<Note>
+  No query parameters are required for this endpoint.
+</Note>
+
+## Response
+
+<ResponseField name="status" type="string">
+  `"00"` on success. Any other value indicates an error.
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of supported token objects.
+
+  <Expandable title="Token object">
+    <ResponseField name="token" type="string">
+      The token symbol, e.g. `"USDC"` or `"USDT"`.
+    </ResponseField>
+
+    <ResponseField name="mint" type="string">
+      The Solana mint address for this token. Use this address when building your on-chain transfer instruction.
+    </ResponseField>
+
+    <ResponseField name="decimal" type="number">
+      The token's decimal precision. Use this to correctly convert human-readable amounts to the raw integer units required by the Solana program (e.g. `6.00 USDC` → `6000000` raw units).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "status": "00",
+  "data": [
+    { "token": "USDC", "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "decimal": 6 },
+    { "token": "USDT", "mint": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", "decimal": 6 }
+  ]
+}
+```
+
+## Code Example
+
+```typescript
+const response = await fetch(`${BASE_URL}/tokens`, {
+  headers: { 'secretkey': process.env.SECRET_KEY },
+});
+const { status, data } = await response.json();
+```

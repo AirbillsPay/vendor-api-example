@@ -1,0 +1,105 @@
+---
+title: "Payment Modes: Default vs. Transfer Mode Explained"
+sidebarTitle: "Payment Modes"
+description: "AirbillsPay supports two payment modes: default (sign a Solana transaction) and transfer (send tokens to a deposit address). Learn when to use each."
+---
+
+AirbillsPay gives you two ways to settle the on-chain payment for any bill: **default mode**, where your server signs and submits a Solana transaction directly, and **transfer mode**, where the user sends tokens to a deposit address using their own wallet. Both modes share the same two-step lifecycle — create a transaction with `/transact`, settle on-chain, then call `/transact/process` to fulfill the bill — but the on-chain step works differently depending on which mode you choose.
+
+## Default Mode
+
+In default mode, you pass `payWith: "default"` in your `/transact` request body. The API responds with a base64-encoded Solana transaction in the `transactionIx` field. Your server deserializes that transaction, signs it with a Solana wallet you control, submits it on-chain, and then calls `/transact/process` to fulfill the bill payment.
+
+**Response:**
+
+```json
+{
+  "status": "00",
+  "message": "Successful",
+  "data": {
+    "id": "vendor-transaction-uuid",
+    "transactionIx": "base64EncodedTransaction",
+    "token": "USDC",
+    "tokenMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    "amountInToken": 0.52
+  }
+}
+```
+
+**Signing and submitting the transaction (TypeScript):**
+
+```typescript
+import { Transaction, Connection, clusterApiUrl, Keypair } from '@solana/web3.js';
+
+// Deserialize and sign
+const transaction = Transaction.from(Buffer.from(data.transactionIx, 'base64'));
+const signer = Keypair.fromSecretKey(new Uint8Array(JSON.parse(process.env.WALLET_PRIVATE_KEY)));
+transaction.sign(signer);
+
+// Submit on-chain
+const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
+const signature = await connection.sendRawTransaction(transaction.serialize());
+await connection.confirmTransaction(signature);
+```
+
+<Tip>
+  Default mode is best suited for **server-side integrations** where your backend controls the signing wallet. Because you own the private key, the entire flow — from creating the transaction to submitting it on-chain — can happen without any user interaction.
+</Tip>
+
+---
+
+## Transfer Mode
+
+In transfer mode, you pass `payWith: "transfer"` in your `/transact` request body. The API responds with a deposit wallet address in the `wallet` field. The user sends exactly `amountInToken` of the specified `token` to that address on Solana mainnet. Once the transfer is confirmed on-chain, you call `/transact/process` to fulfill the bill payment.
+
+**Response:**
+
+```json
+{
+  "status": "00",
+  "message": "Successful",
+  "data": {
+    "id": "vendor-transaction-uuid",
+    "wallet": "DynamicSolanaWalletAddress",
+    "token": "USDC",
+    "tokenMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    "amountInToken": 0.52
+  }
+}
+```
+
+<Warning>
+  The deposit wallet address expires after **10 minutes**. The user must complete the on-chain token transfer **and** you must call `/transact/process` before the expiry window closes. Do not present the deposit address to the user without clearly communicating this deadline.
+</Warning>
+
+<Tip>
+  Transfer mode is ideal for **frontend and mobile apps** where the user interacts with their own Solana wallet — for example, via [Solana Pay](https://solanapay.com/) or a wallet adapter. You never need to manage a private key on the server side.
+</Tip>
+
+---
+
+## Comparing the Two Modes
+
+Use this table to decide which mode fits your integration:
+
+| | Default | Transfer |
+|---|---------|----------|
+| **Who signs?** | Your server wallet | The user's own wallet |
+| **What you receive** | `transactionIx` (base64 tx) | `wallet` (deposit address) |
+| **Expiry** | None | 10 minutes |
+| **Best for** | Server-side / backend integrations | Frontend / mobile apps |
+
+<Note>
+  Regardless of which mode you choose, **both modes end the same way**: call `POST /transact/process` with `{ productCode, id }` after the on-chain payment is settled to trigger the actual bill fulfillment.
+</Note>
+
+---
+
+## Supported Tokens
+
+AirbillsPay accepts **USDT** and **USDC** on Solana mainnet. Pass the token symbol as the `token` field in your `/transact` request. Both tokens use 6 decimal places.
+
+| Token | Mint Address | Decimals |
+|-------|--------------|----------|
+| USDC | `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` | 6 |
+| USDT | `Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB` | 6 |

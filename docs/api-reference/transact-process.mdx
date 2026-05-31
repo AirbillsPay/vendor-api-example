@@ -1,0 +1,125 @@
+---
+title: "POST /transact/process — Fulfill a Pending Transaction"
+sidebarTitle: "POST /transact/process"
+description: "POST /api/vendor/gateway/transact/process — fulfills a pending transaction after on-chain payment, triggering bill payment with the utility provider."
+---
+
+After settling payment on-chain — either by signing and submitting the Solana transaction returned in default mode, or by transferring tokens to the deposit address returned in transfer mode — call this endpoint to trigger the actual bill payment. AirbillsPay verifies the on-chain payment, then fulfills the bill with the Nigerian utility provider. This is a required second step; calling `/transact` alone does not pay the bill.
+
+## Endpoint
+
+```
+POST /api/vendor/gateway/transact/process
+```
+
+## Request Headers
+
+| Header | Value |
+|--------|-------|
+| `secretkey` | `your-vendor-secret-key` |
+
+## Request Body
+
+<ParamField body="productCode" type="string" required>
+  The product code for the transaction you are processing. This must be the same value you passed to `/transact` when you initiated the transaction.
+</ParamField>
+
+<ParamField body="id" type="string" required>
+  The transaction ID returned by `/transact` in `data.id`. This uniquely identifies the pending transaction to fulfill.
+</ParamField>
+
+## Response
+
+### Success
+
+<ResponseField name="status" type="string">
+  `"00"` when the bill payment has been successfully fulfilled.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  A human-readable status message, e.g. `"Successful"`.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Transaction details returned by the utility provider. The shape of this object varies by product type.
+</ResponseField>
+
+### Already Processed
+
+If you call this endpoint more than once for the same transaction, the API returns status `"06"` instead of an error. This makes the endpoint safe to retry.
+
+<ResponseField name="status" type="string">
+  `"06"` when the transaction has already been processed.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  `"Transaction has already been processed"`.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The original transaction data from the prior successful processing.
+</ResponseField>
+
+<Note>
+  Status `"06"` is not an error — it means the transaction was already fulfilled in a previous call. If you are retrying due to a network timeout or uncertainty about a prior call, receiving `"06"` confirms the bill was paid successfully. No further action is needed.
+</Note>
+
+<Warning>
+  Only call `/transact/process` after the on-chain transaction is confirmed on the Solana network. Calling this endpoint before the transaction is confirmed may result in a failed bill payment.
+</Warning>
+
+---
+
+## Examples
+
+### Request
+
+```json
+{
+  "productCode": "100",
+  "id": "vendor-transaction-uuid"
+}
+```
+
+### Success Response
+
+```json
+{
+  "status": "00",
+  "message": "Successful",
+  "data": { ... }
+}
+```
+
+### Already Processed Response
+
+```json
+{
+  "status": "06",
+  "message": "Transaction has already been processed",
+  "data": { ... }
+}
+```
+
+---
+
+## TypeScript Example
+
+```typescript
+const result = await fetch(`${BASE_URL}/transact/process`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'secretkey': process.env.SECRET_KEY,
+  },
+  body: JSON.stringify({ productCode: '100', id: transactionId }),
+});
+
+const { status, message, data } = await result.json();
+
+if (status === '06') {
+  console.log('Transaction already processed');
+} else if (status !== '00') {
+  throw new Error(`Processing failed: ${message}`);
+}
+```

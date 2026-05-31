@@ -1,0 +1,155 @@
+---
+title: "GET /transaction/* — Retrieve Transaction History"
+sidebarTitle: "GET /transaction/*"
+description: "AirbillsPay transaction history endpoints let you retrieve all transactions by vendor reference or look up a single transaction by its ID."
+---
+
+Use these endpoints to retrieve past transactions — either all transactions associated with your vendor account, or a single transaction looked up by its ID. These are useful for building transaction dashboards, reconciling payments, and checking the current status of a specific bill payment.
+
+## GET /transaction/all
+
+Retrieves all transactions associated with your vendor account.
+
+### Endpoint
+
+```
+GET /api/vendor/gateway/transaction/all
+```
+
+### Request Headers
+
+| Header | Value |
+|--------|-------|
+| `secretkey` | `your-vendor-secret-key` |
+
+### Query Parameters
+
+<ParamField query="ref" type="string" required>
+  Your vendor reference name — the name associated with your vendor account when it was created.
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  `"00"` on success. See [Error Codes](/api-reference/error-codes) for all possible values.
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  An array of transaction objects for your vendor account. Each object contains at minimum the following fields:
+
+  <Expandable title="Transaction object fields">
+    <ResponseField name="id" type="string">
+      The unique transaction ID.
+    </ResponseField>
+
+    <ResponseField name="txType" type="string">
+      The type of bill paid, e.g. `"airtime"`, `"electricity"`.
+    </ResponseField>
+
+    <ResponseField name="amount" type="number">
+      The bill amount in NGN.
+    </ResponseField>
+
+    <ResponseField name="vendorstatus" type="string">
+      The current status of the transaction, e.g. `"completed"` or `"pending"`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "status": "00",
+  "data": [
+    { "id": "abc123", "txType": "airtime", "amount": 500, "vendorstatus": "completed" },
+    { "id": "def456", "txType": "electricity", "amount": 5000, "vendorstatus": "pending" }
+  ]
+}
+```
+
+### TypeScript Example
+
+```typescript
+const params = new URLSearchParams({ ref: 'your-vendor-name' });
+
+const response = await fetch(`${BASE_URL}/transaction/all?${params}`, {
+  headers: { 'secretkey': process.env.SECRET_KEY },
+});
+
+const { data } = await response.json();
+```
+
+---
+
+## GET /transaction/get
+
+Retrieves a single transaction by its ID.
+
+### Endpoint
+
+```
+GET /api/vendor/gateway/transaction/get
+```
+
+### Request Headers
+
+| Header | Value |
+|--------|-------|
+| `secretkey` | `your-vendor-secret-key` |
+
+### Query Parameters
+
+<ParamField query="id" type="string" required>
+  The transaction ID to look up. This is the `id` value returned by `/transact` in `data.id`.
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  `"00"` on success. See [Error Codes](/api-reference/error-codes) for all possible values.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  A single transaction object containing at minimum the following fields:
+
+  <Expandable title="Transaction object fields">
+    <ResponseField name="id" type="string">
+      The unique transaction ID.
+    </ResponseField>
+
+    <ResponseField name="txType" type="string">
+      The type of bill paid, e.g. `"airtime"`, `"electricity"`.
+    </ResponseField>
+
+    <ResponseField name="amount" type="number">
+      The bill amount in NGN.
+    </ResponseField>
+
+    <ResponseField name="vendorstatus" type="string">
+      The current status of the transaction. Check this field to confirm whether a bill payment has been fulfilled.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "status": "00",
+  "data": { "id": "abc123", "txType": "airtime", "amount": 500, "vendorstatus": "completed" }
+}
+```
+
+### TypeScript Example
+
+```typescript
+const params = new URLSearchParams({ id: 'vendor-transaction-uuid' });
+
+const response = await fetch(`${BASE_URL}/transaction/get?${params}`, {
+  headers: { 'secretkey': process.env.SECRET_KEY },
+});
+
+const { data } = await response.json();
+console.log(data.vendorstatus); // 'completed'
+```

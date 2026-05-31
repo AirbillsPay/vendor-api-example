@@ -1,0 +1,157 @@
+---
+title: "Pay Cable TV Subscriptions via the AirbillsPay API"
+sidebarTitle: "Cable TV"
+description: "Renew DStv, GOtv, Startimes, and other cable TV subscriptions for your users using AirbillsPay. List packages, get product IDs, and submit payments."
+---
+
+AirbillsPay lets you renew cable TV subscriptions for your users without handling naira payments. Your users pay in USDT or USDC on Solana, and AirbillsPay credits the subscription directly to their smart card. Supported providers include DStv, GOtv, Startimes, and more. Always fetch the live package list to get accurate plan IDs and pricing before initiating a transaction.
+
+## Product Details
+
+- **Product code:** `104`
+
+## Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `smartCardNo` | string | Customer's smart card number |
+| `phoneNumber` | string | Customer's phone number |
+| `prodId` | string | Package product ID (from `/list/cable`) |
+| `amount` | number | Package amount in NGN (from `/list/cable`) |
+| `pubKey` | string | User's Solana wallet public key |
+| `token` | string | `"USDT"` or `"USDC"` |
+
+## Transaction Flow
+
+<Steps>
+  <Step title="List available cable TV packages">
+    Fetch the current list of supported cable TV packages from `/list/cable`. Each package includes a `prodId` and a `prodAmount` that you will use in the transaction request.
+
+    ```bash
+    GET /api/vendor/gateway/list/cable
+    ```
+
+    Example response shape:
+
+    ```json
+    {
+      "status": "00",
+      "data": [
+        {
+          "prodId": "DSTV-COMPACT",
+          "prodAmount": 15700,
+          "description": "DStv Compact — 1 month",
+          "provider": "DStv"
+        },
+        {
+          "prodId": "GOTV-MAX",
+          "prodAmount": 7200,
+          "description": "GOtv Max — 1 month",
+          "provider": "GOtv"
+        }
+      ]
+    }
+    ```
+
+    <Note>
+      Always use the `prodAmount` from this list as the `amount` in your transaction request. Package prices can change, and mismatched amounts will cause the transaction to fail.
+    </Note>
+  </Step>
+
+  <Step title="Initiate the cable TV transaction">
+    Post to `/transact` with product code `104`, the customer's smart card number, and the selected package's `prodId` and `prodAmount`.
+
+    ```typescript
+    const BASE_URL = 'https://your-domain.com/api/vendor/gateway';
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'secretkey': process.env.SECRET_KEY,
+    };
+
+    // Fetch packages
+    const pkgs = await fetch(`${BASE_URL}/list/cable`, { headers });
+    const { data: packages } = await pkgs.json();
+    const pkg = packages[0]; // pick desired package
+
+    // Initiate transaction
+    const response = await fetch(`${BASE_URL}/transact`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        productCode: '104',
+        payWith: 'default',
+        data: {
+          pubKey: 'user-wallet-public-key',
+          token: 'USDC',
+          amount: pkg.prodAmount,
+          smartCardNo: '1234567890',
+          phoneNumber: '08012345678',
+          prodId: pkg.prodId,
+        },
+      }),
+    });
+
+    const { data } = await response.json();
+    // data: { id, transactionIx, token, tokenMint, amountInToken }
+    ```
+
+    <Note>
+      Save `data.id` — you will need it when calling `/transact/process` after the on-chain payment is confirmed.
+    </Note>
+  </Step>
+
+  <Step title="Sign, submit, and process the transaction">
+    Deserialize the `transactionIx`, have the user sign it with their Solana wallet, broadcast it, and then call `/transact/process` to activate the subscription.
+
+    ```typescript
+    import {
+      Transaction,
+      Connection,
+      clusterApiUrl,
+    } from '@solana/web3.js';
+
+    const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
+
+    // Deserialize and sign
+    const transaction = Transaction.from(Buffer.from(data.transactionIx, 'base64'));
+    transaction.sign(userKeypair);
+
+    // Broadcast
+    const signature = await connection.sendRawTransaction(transaction.serialize());
+
+    // Wait for confirmation
+    const latest = await connection.getLatestBlockhash({ commitment: 'confirmed' });
+    const confirmation = await connection.confirmTransaction(
+      { signature, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight },
+      'confirmed'
+    );
+
+    if (confirmation.value.err) {
+      throw new Error('On-chain transaction failed');
+    }
+
+    // Notify AirbillsPay to process the subscription
+    const result = await fetch(`${BASE_URL}/transact/process`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        productCode: '104',
+        id: data.id,
+      }),
+    });
+
+    const { status, message } = await result.json();
+    ```
+
+    A `status` of `"00"` confirms that the subscription has been renewed on the customer's smart card.
+  </Step>
+</Steps>
+
+<Tip>
+  You can also pay using transfer mode: set `payWith` to `"transfer"` in the `/transact` request, send exactly `data.amountInToken` of `data.token` to `data.wallet` on Solana mainnet (the wallet expires in 10 minutes), then call `/transact/process` as shown above.
+</Tip>
+
+<Tip>
+  Want to pay electricity bills or top up airtime using the same pattern? See the [Electricity guide](/guides/electricity) and the [Airtime guide](/guides/airtime) for step-by-step walkthroughs.
+</Tip>

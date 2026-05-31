@@ -1,0 +1,58 @@
+---
+title: "AirbillsPay API: Overview, Products, and Payment Modes"
+sidebarTitle: "Introduction"
+description: "AirbillsPay pays Nigerian utility bills via USDT or USDC on Solana. Learn supported products, payment modes, and how to obtain a vendor secret key."
+---
+
+AirbillsPay is a vendor gateway API designed for businesses that want to pay Nigerian utility bills — airtime, electricity, internet data, cable TV, betting wallet top-ups, and transport — on behalf of their users. Instead of integrating with each biller separately and managing naira payments, you make a single API call per transaction and AirbillsPay handles the rest. Every payment is settled in **USDT or USDC on the Solana blockchain**, giving you fast finality, low fees, and a stable-coin-denominated settlement layer your business can rely on.
+
+## Supported products
+
+AirbillsPay covers six bill categories, each identified by a numeric product code you pass in every request.
+
+| Code | Product |
+|------|---------|
+| `100` | Airtime |
+| `101` | Electricity |
+| `102` | Internet Data |
+| `103` | Betting |
+| `104` | Cable TV |
+| `105` | Transport |
+
+## Payment modes
+
+When you initiate a transaction you choose one of two payment modes depending on how you want to handle the on-chain transfer.
+
+**`default` mode** — AirbillsPay returns a serialised Solana transaction instruction (`transactionIx`). You deserialise it, sign it with the payer's Solana wallet, and submit it on-chain. This gives you full control over the signing flow and is the recommended mode for server-side integrations where you hold or proxy a wallet.
+
+**`transfer` mode** — AirbillsPay returns a deposit address. The user (or your system) sends the required USDT or USDC directly to that address. Use this mode when you want to let users pay from their own wallets without your server acting as an intermediary signer.
+
+## Base API path
+
+All vendor gateway endpoints sit under:
+
+```text
+/api/vendor/gateway
+```
+
+For example, to initiate a transaction you call `POST /api/vendor/gateway/transact`.
+
+## How to get access
+
+To start making API calls you need a **vendor secret key**. You can obtain one in two ways:
+
+- **Dashboard** — sign in at [business.airbills.org](https://business.airbills.org/) and generate a secret key from the vendor settings page.
+- **Email** — send a request to [support@airbills.org](mailto:support@airbills.org) with your project name, Telegram username, and a Solana wallet address. The team will provision your account and send you the key.
+
+<Note>
+  **V1 API deprecation notice:** The V1 AirbillsPay API stops working on **6th April 2026**. If you are on V1, migrate to V2 before that date to avoid service interruption.
+</Note>
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Follow a step-by-step guide to make your first bill payment in under five minutes.
+  </Card>
+  <Card title="Authentication" icon="key" href="/authentication">
+    Learn how to pass your secret key correctly on every API request.
+  </Card>
+</CardGroup>

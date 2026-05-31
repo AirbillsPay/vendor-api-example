@@ -1,0 +1,181 @@
+---
+title: "Supported Bill Payment Products and Required Fields"
+sidebarTitle: "Products"
+description: "AirbillsPay supports six bill payment products: airtime, electricity, internet data, betting, cable TV, and transport, each with specific required fields."
+---
+
+AirbillsPay supports six product categories — airtime, electricity, internet data, betting, cable TV, and transport — each identified by a numeric product code that you pass as `productCode` in your `/transact` requests. Most products also require a preliminary lookup call to retrieve valid provider IDs (`prodId`) and, in some cases, exact amounts before you can create a transaction.
+
+## Products Overview
+
+| Code | Product | Min Amount (NGN) | Max Amount (NGN) |
+|------|---------|-----------------|------------------|
+| `100` | Airtime | 50 | 50,000 |
+| `101` | Electricity | 2,000 | — |
+| `102` | Internet Data | — | — |
+| `103` | Betting | 1,000 | 100,000 |
+| `104` | Cable TV | — | — |
+| `105` | Transport | — | — |
+
+<Tip>
+  Always call the relevant lookup endpoint first to retrieve valid `prodId` and `amount` values for the product you want to bill. Attempting to transact with an invalid `prodId` will result in an error response.
+</Tip>
+
+---
+
+## Common Fields
+
+Every `/transact` request — regardless of product — requires the following fields inside the `data` object:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `pubKey` | string | The user's Solana wallet public key |
+| `token` | string | `"USDT"` or `"USDC"` |
+
+Each product also requires an `amount` field (in NGN) with product-specific constraints. See the per-product tables below for the exact `amount` rules and all additional required fields.
+
+---
+
+## Product Details
+
+### Airtime — `100`
+
+Airtime top-ups are supported for all four major Nigerian mobile networks. You pass the phone number, network ID, and desired amount directly — no separate product list lookup is needed. Use the `/network-checker` endpoint to automatically detect the correct network for any phone number.
+
+**Required `data` fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `phoneNumber` | string | Recipient's phone number |
+| `networkId` | string | Network provider code (see below) |
+| `amount` | number | Top-up amount in NGN (50–50,000) |
+| `pubKey` | string | User's Solana wallet public key |
+| `token` | string | `"USDT"` or `"USDC"` |
+
+**Network ID values:**
+
+| `networkId` | Provider |
+|------------|----------|
+| `"01"` | MTN |
+| `"02"` | Glo |
+| `"03"` | 9mobile |
+| `"04"` | Airtel |
+
+<Note>
+  Call `GET /network-checker` with the phone number to detect the network automatically rather than asking the user to select their provider manually.
+</Note>
+
+---
+
+### Electricity — `101`
+
+Electricity bill payments require a valid electricity distributor ID (`electId`) and a meter number. Before transacting, you must validate the meter with `/validate/elect` to confirm the meter number is active and retrieve the account name to display to the user.
+
+**Required `data` fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `meterNo` | string | Customer's electricity meter number |
+| `electId` | string | Electricity distributor ID |
+| `amount` | number | Amount in NGN (minimum 2,000) |
+| `prodId` | string | Product/plan ID from `/list/elect` |
+| `pubKey` | string | User's Solana wallet public key |
+| `token` | string | `"USDT"` or `"USDC"` |
+
+**Lookup steps:**
+
+<Steps>
+  <Step title="List distributors">
+    Call `GET /list/elect` to retrieve all supported electricity distributors and their valid `electId` values.
+  </Step>
+  <Step title="Validate the meter">
+    Call `POST /validate/elect` with the `meterNo` and `electId` to confirm the meter is valid and get the account holder's name before charging.
+  </Step>
+  <Step title="Create the transaction">
+    Once validated, proceed with `POST /transact` using `productCode: "101"`.
+  </Step>
+</Steps>
+
+---
+
+### Internet Data — `102`
+
+Data bundle purchases follow the same network provider structure as airtime. Use `/list/internet` to get available data plans, their `prodId` values, and the exact amounts for each bundle.
+
+**Required `data` fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `phoneNumber` | string | Recipient's phone number |
+| `networkId` | string | Network provider code (same as airtime) |
+| `amount` | number | Amount in NGN (from plan list) |
+| `prodId` | string | Data plan ID from `/list/internet` |
+| `pubKey` | string | User's Solana wallet public key |
+| `token` | string | `"USDT"` or `"USDC"` |
+
+<Note>
+  Call `GET /list/internet` with the `networkId` to retrieve available data plans and their exact prices. The `amount` must match the plan price exactly as returned by the list endpoint.
+</Note>
+
+**Network ID values** are the same as airtime: `"01"` MTN, `"02"` Glo, `"03"` 9mobile, `"04"` Airtel.
+
+---
+
+### Betting — `103`
+
+Betting wallet funding lets users top up their accounts on supported Nigerian betting platforms. Use `/list/bet` to get the list of supported betting providers and their `prodId` values.
+
+**Required `data` fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `customerId` | string | User's betting account ID on the platform |
+| `prodId` | string | Betting provider ID from `/list/bet` |
+| `amount` | number | Amount in NGN (1,000–100,000) |
+| `pubKey` | string | User's Solana wallet public key |
+| `token` | string | `"USDT"` or `"USDC"` |
+
+<Note>
+  Call `GET /list/bet` to retrieve supported betting providers and their `prodId` values before transacting.
+</Note>
+
+---
+
+### Cable TV — `104`
+
+Cable TV subscriptions cover supported Nigerian pay-TV providers. Use `/list/cable` to retrieve available packages along with their `prodId` and the exact `prodAmount` for each plan.
+
+**Required `data` fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `smartCardNo` | string | Customer's smart card / IUC number |
+| `phoneNumber` | string | Customer's phone number |
+| `prodId` | string | Subscription package ID from `/list/cable` |
+| `amount` | number | Package amount from `/list/cable` |
+| `pubKey` | string | User's Solana wallet public key |
+| `token` | string | `"USDT"` or `"USDC"` |
+
+<Note>
+  Call `GET /list/cable` to retrieve the available packages and their associated `prodId` and `prodAmount` values. Use the exact `prodAmount` as your `amount` to avoid validation errors.
+</Note>
+
+---
+
+### Transport — `105`
+
+Transport payments cover supported Nigerian transit and commute services. Use `/list/transport` to retrieve available services and their `prodId` values.
+
+**Required `data` fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `phoneNumber` | string | Customer's phone number |
+| `prodId` | string | Transport service ID from `/list/transport` |
+| `amount` | number | Amount in NGN |
+| `pubKey` | string | User's Solana wallet public key |
+| `token` | string | `"USDT"` or `"USDC"` |
+
+<Note>
+  Call `GET /list/transport` to retrieve supported transport services and their valid `prodId` values before creating a transaction.
+</Note>

@@ -1,0 +1,147 @@
+---
+title: "Fund Betting Accounts via the AirbillsPay Vendor API"
+sidebarTitle: "Betting"
+description: "Top up Bet9ja, Sportybet, and other betting wallet accounts for your users via AirbillsPay. Covers platform lookup and transaction flow with code examples."
+---
+
+AirbillsPay lets you fund your users' betting accounts on platforms like Bet9ja, Sportybet, and others — all paid in USDT or USDC on Solana. Your users never need to manage naira bank transfers; they simply approve a Solana transaction and the credit lands in their betting wallet. Fetch the live list of supported platforms to get valid `prodId` values before submitting any transaction.
+
+## Product Details
+
+- **Product code:** `103`
+- **Amount range:** 1,000–100,000 NGN
+
+## Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `customerId` | string | Customer's betting account ID |
+| `prodId` | string | Betting platform product ID (from `/list/bet`) |
+| `amount` | number | Amount in NGN (1,000–100,000) |
+| `pubKey` | string | User's Solana wallet public key |
+| `token` | string | `"USDT"` or `"USDC"` |
+
+## Transaction Flow
+
+<Steps>
+  <Step title="List supported betting platforms">
+    Fetch available betting platforms from `/list/bet` to retrieve valid `prodId` values. Present this list to your user so they can select their platform.
+
+    ```bash
+    GET /api/vendor/gateway/list/bet
+    ```
+
+    Example response shape:
+
+    ```json
+    {
+      "status": "00",
+      "data": [
+        { "prodId": "BET9JA", "name": "Bet9ja" },
+        { "prodId": "SPORTYBET", "name": "Sportybet" },
+        { "prodId": "1XBET", "name": "1xBet" }
+      ]
+    }
+    ```
+
+    <Note>
+      Always use `prodId` values from this response. Hardcoded IDs may become invalid if a platform is updated or removed.
+    </Note>
+  </Step>
+
+  <Step title="Initiate the betting account top-up">
+    Post to `/transact` with product code `103`, the customer's betting account ID (`customerId`), the selected platform's `prodId`, and the top-up amount.
+
+    ```typescript
+    const BASE_URL = 'https://your-domain.com/api/vendor/gateway';
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'secretkey': process.env.SECRET_KEY,
+    };
+
+    // Fetch platforms
+    const platforms = await fetch(`${BASE_URL}/list/bet`, { headers });
+    const { data: platformList } = await platforms.json();
+    const platform = platformList[0]; // pick desired platform
+
+    // Initiate transaction
+    const response = await fetch(`${BASE_URL}/transact`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        productCode: '103',
+        payWith: 'default',
+        data: {
+          pubKey: 'user-wallet-public-key',
+          token: 'USDC',
+          amount: 2000,
+          customerId: 'USER_BETTING_ID',
+          prodId: platform.prodId,
+        },
+      }),
+    });
+
+    const { data } = await response.json();
+    // data: { id, transactionIx, token, tokenMint, amountInToken }
+    ```
+
+    <Warning>
+      Double-check the `customerId` with your user before submitting. Funds sent to an incorrect betting account ID cannot be recovered automatically.
+    </Warning>
+  </Step>
+
+  <Step title="Sign, submit, and process the transaction">
+    Deserialize the `transactionIx`, have the user sign and broadcast it on Solana, then call `/transact/process` to credit the betting account.
+
+    ```typescript
+    import {
+      Transaction,
+      Connection,
+      clusterApiUrl,
+    } from '@solana/web3.js';
+
+    const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
+
+    // Deserialize and sign
+    const transaction = Transaction.from(Buffer.from(data.transactionIx, 'base64'));
+    transaction.sign(userKeypair);
+
+    // Broadcast
+    const signature = await connection.sendRawTransaction(transaction.serialize());
+
+    // Wait for confirmation
+    const latest = await connection.getLatestBlockhash({ commitment: 'confirmed' });
+    const confirmation = await connection.confirmTransaction(
+      { signature, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight },
+      'confirmed'
+    );
+
+    if (confirmation.value.err) {
+      throw new Error('On-chain transaction failed');
+    }
+
+    // Notify AirbillsPay to process the top-up
+    const result = await fetch(`${BASE_URL}/transact/process`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        productCode: '103',
+        id: data.id,
+      }),
+    });
+
+    const { status, message } = await result.json();
+    ```
+
+    A `status` of `"00"` confirms that the funds have been credited to the customer's betting account.
+  </Step>
+</Steps>
+
+<Tip>
+  You can also pay using transfer mode: set `payWith` to `"transfer"` in the `/transact` request, send exactly `data.amountInToken` of `data.token` to `data.wallet` on Solana mainnet (the wallet expires in 10 minutes), then call `/transact/process` as shown above.
+</Tip>
+
+<Tip>
+  Looking to top up mobile airtime or purchase data for the same user? See the [Airtime guide](/guides/airtime) and the [Internet Data guide](/guides/internet-data).
+</Tip>

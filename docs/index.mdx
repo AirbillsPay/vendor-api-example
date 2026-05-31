@@ -1,0 +1,47 @@
+---
+title: "AirbillsPay: Nigerian Bill Payments via Solana for Vendors"
+sidebarTitle: "Home"
+description: "AirbillsPay lets your app pay airtime, electricity, data, cable TV, betting, and transport bills for users, settled in USDT or USDC on Solana."
+---
+
+AirbillsPay is a vendor gateway API that lets your application pay Nigerian utility bills — airtime, electricity, internet data, cable TV, betting wallet top-ups, and transport — on behalf of your users. Every payment is settled in USDT or USDC on the Solana blockchain, so you get fast, low-cost settlement without touching traditional payment rails. Integrate once and give your users seamless access to the bills they pay every day.
+
+<CardGroup cols={2}>
+  <Card title="Introduction" icon="bolt" href="/introduction">
+    Learn what AirbillsPay does, which products it supports, and how payment modes work.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Make your first API call in under five minutes and pay your first bill on Solana.
+  </Card>
+  <Card title="Authentication" icon="key" href="/authentication">
+    Understand how to obtain and pass your vendor secret key on every request.
+  </Card>
+  <Card title="API Reference: /transact" icon="code" href="/api-reference/transact">
+    Full reference for the core transaction endpoints that power every bill payment.
+  </Card>
+</CardGroup>
+
+## Get up and running
+
+Follow these steps to go from zero to your first successful bill payment.
+
+<Steps>
+  <Step title="Get your secret key">
+    Sign in to the vendor dashboard at [business.airbills.org](https://business.airbills.org/) and generate your vendor secret key. You'll attach this key to every API request.
+  </Step>
+  <Step title="Configure your environment">
+    Add your secret key and the API base URL to your environment variables so they're never hard-coded in your source.
+  </Step>
+  <Step title="Initiate a transaction with POST /transact">
+    Call `POST /transact` with your chosen product code, payment mode, and the bill details. The API returns a transaction ID and — for `default` mode — a Solana transaction instruction ready to sign.
+  </Step>
+  <Step title="Complete the payment with POST /transact/process">
+    Call `POST /transact/process` with the transaction ID to finalise the bill payment. A `status` of `"00"` in the response confirms success.
+  </Step>
+</Steps>
+
+## Join the community
+
+<Note>
+  Have questions or want to connect with other vendors building on AirbillsPay? Join the Telegram community at [t.me/+tH4W4IWu4dc5ZTA0](https://t.me/+tH4W4IWu4dc5ZTA0). You can also reach the team directly at [support@airbills.org](mailto:support@airbills.org).
+</Note>

@@ -1,0 +1,69 @@
+---
+title: "AirbillsPay Product Codes and Required Transaction Fields"
+sidebarTitle: "Product Codes"
+description: "All AirbillsPay product codes with required data fields, amount limits, and lookup endpoints to call before initiating each transaction type."
+---
+
+Use this reference to quickly look up the product code and required fields for each bill payment type when building your `/transact` requests. Each product has a unique code you pass as `productCode`, a specific set of required fields inside the `data` object, and one or more lookup endpoints you should call beforehand to retrieve valid plan IDs, provider codes, and amount options.
+
+## Product Codes
+
+| Code | Product | Amount Range (NGN) | Lookup Endpoint |
+|------|---------|-------------------|----------------|
+| `"100"` | Airtime | 50 – 50,000 | `/network-checker` |
+| `"101"` | Electricity | 2,000+ | `/list/elect`, `/validate/elect` |
+| `"102"` | Internet Data | Per plan | `/list/internet` |
+| `"103"` | Betting | 1,000 – 100,000 | `/list/bet` |
+| `"104"` | Cable TV | Per package | `/list/cable` |
+| `"105"` | Transport | Per service | `/list/transport` |
+
+<Tip>
+  For products that require a `prodId`, always call the corresponding lookup endpoint first to retrieve valid IDs and their associated amounts. Passing an invalid `prodId` will result in a failed transaction.
+</Tip>
+
+---
+
+## Required Fields per Product
+
+The table below shows which fields inside the `data` object are required (✓) for each product code. Fields marked `pubKey`, `token`, and `amount` are always required for every transaction.
+
+| Field | Airtime (`100`) | Electricity (`101`) | Internet (`102`) | Betting (`103`) | Cable TV (`104`) | Transport (`105`) |
+|-------|:-----------:|:---------------:|:------------:|:-----------:|:------------:|:-------------:|
+| `pubKey` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `token` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `amount` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `phoneNumber` | ✓ | | ✓ | | ✓ | ✓ |
+| `networkId` | ✓ | | ✓ | | | |
+| `prodId` | | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `meterNo` | | ✓ | | | | |
+| `electId` | | ✓ | | | | |
+| `smartCardNo` | | | | | ✓ | |
+| `customerId` | | | | ✓ | | |
+
+---
+
+## Network IDs
+
+For Airtime (`100`) and Internet Data (`102`) transactions, pass the appropriate `networkId` value for the recipient's mobile carrier:
+
+| `networkId` | Network |
+|-------------|---------|
+| `"01"` | MTN |
+| `"02"` | Glo |
+| `"03"` | 9mobile |
+| `"04"` | Airtel |
+
+---
+
+## Field Descriptions
+
+- **`pubKey`** — the user's Solana wallet public key, used to build or verify the on-chain payment transaction.
+- **`token`** — the stablecoin to pay with: `"USDT"` or `"USDC"`.
+- **`amount`** — the bill amount in NGN. The API converts this to the equivalent token amount (`amountInToken`) in the response.
+- **`phoneNumber`** — the recipient's phone number (airtime top-up, data plan, cable TV, or transport).
+- **`networkId`** — the mobile network carrier code; required when topping up airtime or data.
+- **`prodId`** — the specific product or plan identifier within the category. Retrieve valid values from the lookup endpoint for each product before calling `/transact`.
+- **`meterNo`** — the electricity meter number for the customer receiving the token top-up.
+- **`electId`** — the electricity distribution company identifier. Retrieve valid values from `/list/elect`.
+- **`smartCardNo`** — the cable TV smart card number linked to the subscription to renew.
+- **`customerId`** — the customer's ID on the betting platform (used to fund the betting wallet).

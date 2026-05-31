@@ -1,0 +1,126 @@
+---
+title: "Quickstart: Pay Your First Bill with AirbillsPay API"
+sidebarTitle: "Quickstart"
+description: "Make your first AirbillsPay vendor API call: initiate a transaction with POST /transact, then process it with POST /transact/process."
+---
+
+This guide walks you through paying your first Nigerian utility bill using the AirbillsPay vendor API. You'll initiate an airtime purchase with `POST /transact`, sign the resulting Solana transaction, and finalise the payment with `POST /transact/process`. The entire flow takes under five minutes once you have your secret key in hand.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+- A **vendor secret key** — generate one from the dashboard at [business.airbills.org](https://business.airbills.org/)
+- A **Solana wallet** loaded with USDT or USDC (required for `default` mode, where your server signs the on-chain transaction)
+
+<Steps>
+  <Step title="Get your secret key">
+    Visit [business.airbills.org](https://business.airbills.org/) and sign in to the vendor dashboard. Navigate to your account settings and generate a new secret key. Copy it somewhere safe — you won't be able to view it again after leaving the page.
+
+    If you prefer, email [support@airbills.org](mailto:support@airbills.org) with your project name, Telegram username, and a Solana wallet address to have an account provisioned for you.
+  </Step>
+
+  <Step title="Configure your environment">
+    Add your secret key and the API base URL to a `.env` file (or your platform's secret store). Never hard-code credentials in your source.
+
+    ```bash
+    # .env.example
+    SECRET_KEY="your-vendor-secret-key"
+    BASE_URL="https://your-api-domain.com/api/vendor/gateway"
+    ```
+
+    Load these values at runtime using your framework's environment variable support (for example, `process.env.SECRET_KEY` in Node.js).
+  </Step>
+
+  <Step title="Initiate a transaction">
+    Call `POST /transact` with the product code, payment mode, and bill details. The example below purchases ₦500 of airtime for a MTN number using `default` mode and USDC.
+
+    ```typescript
+    const response = await fetch(`${process.env.BASE_URL}/transact`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'secretkey': process.env.SECRET_KEY,
+      },
+      body: JSON.stringify({
+        productCode: '100',       // 100 = Airtime
+        payWith: 'default',
+        data: {
+          pubKey: 'user-wallet-public-key',
+          token: 'USDC',
+          amount: 500,            // Amount in NGN
+          phoneNumber: '08012345678',
+          networkId: '01',        // e.g. 01 = MTN
+        },
+      }),
+    });
+
+    const { data } = await response.json();
+    // data: { id, transactionIx, token, tokenMint, amountInToken }
+    ```
+
+    The response includes a unique transaction `id` and a base64-encoded Solana transaction instruction (`transactionIx`) ready for signing.
+  </Step>
+
+  <Step title="Sign the transaction">
+    Deserialise `data.transactionIx` from base64, sign it with the payer's Solana wallet, and submit it to the Solana network. The exact signing steps depend on the wallet library you use (for example, `@solana/web3.js` or a wallet adapter). Your signing code should:
+
+    1. Decode `data.transactionIx` from base64 into a `Buffer`.
+    2. Deserialise it into a `Transaction` or `VersionedTransaction` object.
+    3. Sign with the appropriate keypair or wallet.
+    4. Send and confirm the transaction on-chain before proceeding.
+
+    Once the transaction is confirmed on-chain, move on to the next step.
+  </Step>
+
+  <Step title="Process the transaction">
+    Call `POST /transact/process` with the product code and the `id` returned in step 3. AirbillsPay verifies the on-chain payment and delivers the bill.
+
+    ```typescript
+    const result = await fetch(`${process.env.BASE_URL}/transact/process`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'secretkey': process.env.SECRET_KEY,
+      },
+      body: JSON.stringify({
+        productCode: '100',
+        id: data.id,
+      }),
+    });
+
+    const { status, message } = await result.json();
+    // status: '00' means success
+    ```
+
+    A successful response looks like this:
+
+    ```json
+    {
+      "status": "00",
+      "message": "Successful",
+      "data": { }
+    }
+    ```
+
+    A `status` of `"00"` confirms that the bill was paid successfully. Any other status code indicates an error — check the `message` field for details.
+  </Step>
+</Steps>
+
+<Tip>
+  If you don't want your server to sign Solana transactions, use `payWith: "transfer"` instead. AirbillsPay will return a deposit address, and the user can send the required USDT or USDC directly from their own wallet. See the [payment modes](/concepts/payment-modes) guide for details.
+</Tip>
+
+## Next steps
+
+<CardGroup cols={3}>
+  <Card title="Authentication" icon="key" href="/authentication">
+    Understand secret key security and how to handle auth errors.
+  </Card>
+  <Card title="Payment Modes" icon="arrows-split-up-and-left" href="/concepts/payment-modes">
+    Deep-dive into `default` vs `transfer` mode and when to use each.
+  </Card>
+  <Card title="API Reference: /transact" icon="code" href="/api-reference/transact">
+    Full parameter reference for both transaction endpoints.
+  </Card>
+</CardGroup>

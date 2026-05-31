@@ -1,0 +1,166 @@
+---
+title: "Buy Mobile Data Bundles via AirbillsPay Vendor API"
+sidebarTitle: "Internet Data"
+description: "Buy internet data bundles for MTN, Glo, 9mobile, and Airtel users via the AirbillsPay vendor API. Learn how to list available plans and submit data orders."
+---
+
+AirbillsPay makes it easy to purchase mobile data bundles for your users across all four major Nigerian networks. Your users pay in USDT or USDC on Solana, and the data bundle is delivered directly to their phone number. Because plans and pricing can change at any time, always fetch the live plan list before presenting options to your users.
+
+## Product Details
+
+- **Product code:** `102`
+
+## Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `phoneNumber` | string | Recipient's phone number |
+| `networkId` | string | Network code |
+| `amount` | number | Plan amount in NGN (from `/list/internet`) |
+| `prodId` | string | Plan product ID (from `/list/internet`) |
+| `pubKey` | string | User's Solana wallet public key |
+| `token` | string | `"USDT"` or `"USDC"` |
+
+## Network IDs
+
+| `networkId` | Network |
+|-------------|---------|
+| `"01"` | MTN |
+| `"02"` | Glo |
+| `"03"` | 9mobile |
+| `"04"` | Airtel |
+
+## Transaction Flow
+
+<Steps>
+  <Step title="List available data plans">
+    Fetch the current catalogue of data bundles from `/list/internet`. Each plan includes a `prodId` and a `prodAmount` that you must use when initiating the transaction.
+
+    ```bash
+    GET /api/vendor/gateway/list/internet
+    ```
+
+    Example response shape:
+
+    ```json
+    {
+      "status": "00",
+      "data": [
+        {
+          "prodId": "MTN-1GB-30",
+          "prodAmount": 350,
+          "description": "MTN 1GB — 30 days",
+          "networkId": "01"
+        },
+        {
+          "prodId": "GLO-2GB-14",
+          "prodAmount": 500,
+          "description": "Glo 2GB — 14 days",
+          "networkId": "02"
+        }
+      ]
+    }
+    ```
+
+    <Note>
+      Pass the plan's `prodAmount` as the `amount` field in `/transact`. Submitting an amount that does not match the plan's price will result in a failed transaction.
+    </Note>
+  </Step>
+
+  <Step title="Initiate the data transaction">
+    Use the `prodId` and `prodAmount` from the selected plan to build the `/transact` request. Make sure `networkId` matches the network of the chosen plan.
+
+    ```typescript
+    const BASE_URL = 'https://your-domain.com/api/vendor/gateway';
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'secretkey': process.env.SECRET_KEY,
+    };
+
+    // Fetch plans
+    const plans = await fetch(`${BASE_URL}/list/internet`, { headers });
+    const { data: planList } = await plans.json();
+    const plan = planList[0]; // pick desired plan
+
+    // Initiate transaction
+    const response = await fetch(`${BASE_URL}/transact`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        productCode: '102',
+        payWith: 'default',
+        data: {
+          pubKey: 'user-wallet-public-key',
+          token: 'USDC',
+          amount: plan.prodAmount,
+          phoneNumber: '08012345678',
+          networkId: '01',
+          prodId: plan.prodId,
+        },
+      }),
+    });
+
+    const { data } = await response.json();
+    // data: { id, transactionIx, token, tokenMint, amountInToken }
+    ```
+
+    <Note>
+      Store `data.id` — you will need it when calling `/transact/process` after the on-chain payment is confirmed.
+    </Note>
+  </Step>
+
+  <Step title="Sign, submit, and process the transaction">
+    Deserialize the `transactionIx`, have the user sign it, broadcast it to Solana, and then call `/transact/process` to trigger delivery of the data bundle.
+
+    ```typescript
+    import {
+      Transaction,
+      Connection,
+      clusterApiUrl,
+    } from '@solana/web3.js';
+
+    const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
+
+    // Deserialize and sign
+    const transaction = Transaction.from(Buffer.from(data.transactionIx, 'base64'));
+    transaction.sign(userKeypair);
+
+    // Broadcast
+    const signature = await connection.sendRawTransaction(transaction.serialize());
+
+    // Wait for confirmation
+    const latest = await connection.getLatestBlockhash({ commitment: 'confirmed' });
+    const confirmation = await connection.confirmTransaction(
+      { signature, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight },
+      'confirmed'
+    );
+
+    if (confirmation.value.err) {
+      throw new Error('On-chain transaction failed');
+    }
+
+    // Notify AirbillsPay to process delivery
+    const result = await fetch(`${BASE_URL}/transact/process`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        productCode: '102',
+        id: data.id,
+      }),
+    });
+
+    const { status, message } = await result.json();
+    ```
+
+    A `status` of `"00"` confirms that the data bundle has been dispatched to the recipient.
+  </Step>
+</Steps>
+
+<Tip>
+  You can also pay using transfer mode: set `payWith` to `"transfer"` in the `/transact` request, send exactly `data.amountInToken` of `data.token` to `data.wallet` on Solana mainnet (the wallet expires in 10 minutes), then call `/transact/process` as shown above.
+</Tip>
+
+<Tip>
+  Want to send airtime to the same phone number? See the [Airtime guide](/guides/airtime) for the same flow applied to voice credit top-ups.
+</Tip>

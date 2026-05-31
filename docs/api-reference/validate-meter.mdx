@@ -1,0 +1,73 @@
+---
+title: "Validate an Electricity Meter Number Before Purchase"
+sidebarTitle: "Validate Meter"
+description: "POST /api/vendor/gateway/validate/elect — validates a customer's electricity meter number against a provider before purchasing electricity tokens."
+---
+
+Always validate the meter number before purchasing electricity tokens — this catches invalid meter numbers before any payment is initiated. Skipping this step risks sending funds for a meter number that does not exist or belongs to a different provider, resulting in a failed or irrecoverable transaction.
+
+## Endpoint
+
+```
+POST /api/vendor/gateway/validate/elect
+```
+
+## Request
+
+### Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `Content-Type` | ✓ | `application/json` |
+| `secretkey` | ✓ | Your vendor secret key |
+
+### Body
+
+<ParamField body="meterNo" type="string" required>
+  The customer's electricity meter number. This is the physical meter ID printed on the meter or on their utility bill, e.g. `"12345678901"`.
+</ParamField>
+
+<ParamField body="electId" type="string" required>
+  The electricity provider ID for the customer's distribution company. Obtain valid `electId` values from `GET /list/elect`.
+</ParamField>
+
+### Example Request Body
+
+```json
+{ "meterNo": "12345678901", "electId": "EKEDC" }
+```
+
+## Response
+
+<ResponseField name="status" type="string">
+  `"00"` on success. Any other value indicates the meter number could not be validated.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Meter and account details returned by the provider on successful validation. Present only when `status` is `"00"`.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  A human-readable description of the result. On failure, this field explains why validation was rejected.
+</ResponseField>
+
+## Code Example
+
+```typescript
+const response = await fetch(`${BASE_URL}/validate/elect`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'secretkey': process.env.SECRET_KEY,
+  },
+  body: JSON.stringify({ meterNo: '12345678901', electId: 'EKEDC' }),
+});
+const { status, data, message } = await response.json();
+if (status !== '00') {
+  throw new Error(`Meter validation failed: ${message}`);
+}
+```
+
+<Warning>
+  If validation returns a status other than `"00"`, do **not** proceed to `/transact`. The meter number is invalid for the selected provider. Show the `message` to your user and ask them to double-check their meter number and chosen electricity company before retrying.
+</Warning>

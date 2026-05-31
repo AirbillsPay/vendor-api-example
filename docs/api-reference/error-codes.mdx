@@ -1,0 +1,51 @@
+---
+title: "AirbillsPay API Error Codes, Status Codes, and Meanings"
+sidebarTitle: "Error Codes"
+description: "Complete AirbillsPay API status code reference. Every response includes a status field — learn each code and how to handle errors correctly."
+---
+
+Every AirbillsPay API response includes a `status` field. A status of `"00"` means success; all other values indicate an error or special condition. Always check `status` before reading or acting on the `data` field — this ensures your integration handles partial failures and edge cases correctly.
+
+## Status Code Reference
+
+| Status | Meaning | Recommended Action |
+|--------|---------|-------------------|
+| `"00"` | Success | Proceed with the response `data` as expected. |
+| `"01"` | General failure | Check your request parameters and retry. If the issue persists, log the `message` field and contact support. |
+| `"03"` | Missing or invalid `secretkey` header | Verify your secret key is correct and is being sent in the `secretkey` request header. |
+| `"04"` | Invalid input or unsupported `payWith` value | Check that `payWith` is `"default"` or `"transfer"` and that all required fields for the selected `productCode` are present. |
+| `"06"` | Transaction already processed | The transaction has already been fulfilled — no further action is needed. Treat this as idempotent success. |
+
+---
+
+## Authentication Errors
+
+If your `secretkey` header is missing or your vendor account has an issue, the API returns status `"03"` with one of the following messages:
+
+**Missing secret key header:**
+```json
+{ "status": "03", "message": "Secret key is required" }
+```
+The `secretkey` header was not included in the request. Add the header with your vendor secret key.
+
+**Inactive vendor account:**
+```json
+{ "status": "03", "message": "Vendor account is inactive" }
+```
+Your vendor account has been deactivated or is pending activation. Contact [support@airbills.org](mailto:support@airbills.org) to resolve this.
+
+---
+
+## Best Practices
+
+<Note>
+  Always check the `status` field before reading or processing the `data` field. A `200 HTTP` response does not guarantee a successful operation — the API uses `status` to communicate outcome.
+</Note>
+
+<Note>
+  Treat status `"06"` as idempotent success. If you receive `"06"` when calling `/transact/process`, the transaction was already fulfilled in a prior call. This is not an error — no retry or further action is required.
+</Note>
+
+<Tip>
+  Log the `message` field alongside `status` in your error handling. The `message` provides a human-readable description of what went wrong, which is helpful when debugging integration issues or contacting support.
+</Tip>

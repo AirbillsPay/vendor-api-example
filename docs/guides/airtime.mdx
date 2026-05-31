@@ -1,0 +1,205 @@
+---
+title: "Send Mobile Airtime via the AirbillsPay Vendor API"
+sidebarTitle: "Airtime"
+description: "Top up airtime for MTN, Glo, 9mobile, and Airtel via AirbillsPay. Covers network detection, default signing, and transfer modes with code examples."
+---
+
+The AirbillsPay vendor API lets you top up airtime for any Nigerian mobile subscriber in seconds. Your users pay with USDT or USDC on the Solana blockchain, and AirbillsPay handles the conversion and delivery to the recipient's phone — no naira wallets or bank accounts required.
+
+## Product Details
+
+- **Product code:** `100`
+- **Amount range:** 50–50,000 NGN
+
+## Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `phoneNumber` | string | Recipient's phone number |
+| `networkId` | string | Network code (see below) |
+| `amount` | number | Amount in NGN (50–50,000) |
+| `pubKey` | string | User's Solana wallet public key |
+| `token` | string | `"USDT"` or `"USDC"` |
+
+## Network IDs
+
+| `networkId` | Network |
+|-------------|---------|
+| `"01"` | MTN |
+| `"02"` | Glo |
+| `"03"` | 9mobile |
+| `"04"` | Airtel |
+
+<Tip>
+  If you don't know the subscriber's network, call the `/network-checker` endpoint with the phone number to detect it automatically before initiating the transaction.
+</Tip>
+
+## Transaction Flow
+
+<Steps>
+  <Step title="(Optional) Detect the phone's network">
+    Send a `GET` request to `/network-checker` with the phone number as a query parameter. The response returns the network code you can pass directly as `networkId`.
+
+    ```bash
+    GET /api/vendor/gateway/network-checker?phone=08012345678
+    ```
+
+    ```json
+    {
+      "status": "00",
+      "data": {
+        "networkId": "01",
+        "network": "MTN"
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Initiate the airtime transaction">
+    Post to `/transact` with product code `100`. The response contains a signed transaction instruction (`transactionIx`) you will submit on-chain, along with the token amount your user needs to pay.
+
+    ```typescript
+    const BASE_URL = 'https://your-domain.com/api/vendor/gateway';
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'secretkey': process.env.SECRET_KEY,
+    };
+
+    const response = await fetch(`${BASE_URL}/transact`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        productCode: '100',
+        payWith: 'default',
+        data: {
+          pubKey: 'user-wallet-public-key',
+          token: 'USDC',
+          amount: 500,
+          phoneNumber: '08012345678',
+          networkId: '01', // MTN
+        },
+      }),
+    });
+
+    const { data } = await response.json();
+    // data: { id, transactionIx, token, tokenMint, amountInToken }
+    ```
+
+    <Note>
+      Store `data.id` — you will need it in the processing step after the on-chain transaction is confirmed.
+    </Note>
+  </Step>
+
+  <Step title="Sign and submit the transaction on-chain">
+    Deserialize the `transactionIx` returned in the previous step, have the user sign it with their Solana wallet, and broadcast it to the network.
+
+    ```typescript
+    import {
+      Transaction,
+      Connection,
+      clusterApiUrl,
+    } from '@solana/web3.js';
+
+    const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
+
+    // Deserialize the transaction instruction
+    const transaction = Transaction.from(Buffer.from(data.transactionIx, 'base64'));
+
+    // Sign with the user's wallet (use your wallet adapter in production)
+    transaction.sign(userKeypair);
+
+    // Broadcast to Solana
+    const signature = await connection.sendRawTransaction(transaction.serialize());
+
+    // Wait for confirmation
+    const latest = await connection.getLatestBlockhash({ commitment: 'confirmed' });
+    const confirmation = await connection.confirmTransaction(
+      { signature, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight },
+      'confirmed'
+    );
+
+    if (confirmation.value.err) {
+      throw new Error('On-chain transaction failed');
+    }
+    ```
+  </Step>
+
+  <Step title="Process the transaction">
+    Once the on-chain transaction is confirmed, notify AirbillsPay to deliver the airtime by calling `/transact/process`.
+
+    ```typescript
+    const result = await fetch(`${BASE_URL}/transact/process`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        productCode: '100',
+        id: data.id,
+      }),
+    });
+
+    const { status, message } = await result.json();
+    ```
+
+    A `status` of `"00"` indicates that the airtime was delivered successfully.
+  </Step>
+</Steps>
+
+## Using Transfer Mode
+
+If you prefer a wallet-transfer flow instead of a signed transaction instruction, set `payWith` to `"transfer"`. The response returns a `wallet` address rather than a `transactionIx`. Your user sends the exact `amountInToken` of the specified `token` to that wallet on Solana mainnet, and then you call `/transact/process` as usual.
+
+<Warning>
+  The deposit wallet address expires after 10 minutes. Make sure your user completes the transfer and you call `/transact/process` within that window.
+</Warning>
+
+```typescript
+const BASE_URL = 'https://your-domain.com/api/vendor/gateway';
+
+const headers = {
+  'Content-Type': 'application/json',
+  'secretkey': process.env.SECRET_KEY,
+};
+
+// Step 1 — initiate with transfer mode
+const response = await fetch(`${BASE_URL}/transact`, {
+  method: 'POST',
+  headers,
+  body: JSON.stringify({
+    productCode: '100',
+    payWith: 'transfer',
+    data: {
+      pubKey: 'user-wallet-public-key',
+      token: 'USDC',
+      amount: 500,
+      phoneNumber: '08012345678',
+      networkId: '01',
+    },
+  }),
+});
+
+const { data } = await response.json();
+// data: { id, wallet, token, tokenMint, amountInToken }
+
+// Step 2 — user sends exactly data.amountInToken of data.token to data.wallet on Solana mainnet
+
+// Step 3 — process after transfer is confirmed on-chain
+const result = await fetch(`${BASE_URL}/transact/process`, {
+  method: 'POST',
+  headers,
+  body: JSON.stringify({
+    productCode: '100',
+    id: data.id,
+  }),
+});
+
+const { status, message } = await result.json();
+```
+
+<Warning>
+  Always confirm the on-chain transfer before calling `/transact/process`. Processing before the funds arrive will result in a failed transaction.
+</Warning>
+
+<Tip>
+  Looking to purchase data bundles instead of airtime? See the [Internet Data guide](/guides/internet-data) for a step-by-step walkthrough.
+</Tip>

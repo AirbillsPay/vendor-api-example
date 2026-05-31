@@ -1,0 +1,61 @@
+---
+title: "API Authentication: Secret Key Setup for AirbillsPay"
+sidebarTitle: "Authentication"
+description: "AirbillsPay authenticates every request using a secretkey header. Learn how to get your vendor secret key and pass it correctly on every API call."
+---
+
+Every request you make to the AirbillsPay vendor gateway API must include a `secretkey` header containing your vendor secret key. There are no session tokens, OAuth flows, or cookies — authentication is a single header check on every call. If the header is missing or the key is invalid, the API rejects the request immediately with a descriptive error status.
+
+## Get your secret key
+
+You can obtain a vendor secret key in two ways:
+
+- **Dashboard** — sign in at [business.airbills.org](https://business.airbills.org/) and generate a secret key from your vendor account settings. Your key is shown once, so copy it to a secure location before navigating away.
+- **Email** — send a request to [support@airbills.org](mailto:support@airbills.org) with the following details:
+  - Your project name
+  - Your Telegram username
+  - A Solana wallet address for your vendor account
+
+The support team will provision your account and deliver the key to you directly.
+
+## Pass the secret key on every request
+
+Include your secret key as a custom request header named `secretkey` (all lowercase, no spaces).
+
+```http
+secretkey: your-vendor-secret-key
+```
+
+Here is how to attach the header in TypeScript using the native `fetch` API:
+
+```typescript
+const headers = {
+  'Content-Type': 'application/json',
+  'secretkey': process.env.SECRET_KEY,
+};
+
+const response = await fetch(`${process.env.BASE_URL}/transact`, {
+  method: 'POST',
+  headers,
+  body: JSON.stringify({ /* request body */ }),
+});
+```
+
+Read `SECRET_KEY` from an environment variable rather than embedding the value directly in your code. See the [Quickstart](/quickstart) for a full `.env` setup example.
+
+## Authentication errors
+
+If authentication fails, the API returns a JSON body with a `status` code and a `message` explaining what went wrong.
+
+| Status | Message | Meaning |
+|--------|---------|---------|
+| `03` | Secret key is required | The `secretkey` header is missing from the request |
+| `03` | Vendor account is inactive | Your vendor account has been deactivated — contact support to reactivate it |
+
+<Warning>
+  Keep your secret key private at all times. Never expose it in client-side JavaScript, mobile app binaries, public repositories, or any place that is accessible outside your server environment. Anyone who obtains your key can make API calls charged to your account.
+</Warning>
+
+<Tip>
+  Store your secret key in an environment variable (for example, `SECRET_KEY` in a `.env` file) and add `.env` to your `.gitignore`. Use your platform's secret management service — such as AWS Secrets Manager, Vercel Environment Variables, or Railway Secrets — for production deployments. Never commit credentials to version control.
+</Tip>

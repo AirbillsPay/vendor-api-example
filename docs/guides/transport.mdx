@@ -1,0 +1,153 @@
+---
+title: "Purchase Transport Tickets via the AirbillsPay API"
+sidebarTitle: "Transport"
+description: "Buy transport tickets and top up transit accounts for your users via AirbillsPay. Covers listing available services and submitting transport payments."
+---
+
+AirbillsPay enables you to purchase transport tickets and top up transit accounts for your users, all settled in USDT or USDC on Solana. Whether your users need a bus pass or a transit wallet top-up, AirbillsPay handles the NGN conversion and delivery. Always fetch the live list of available transport services to get the correct `prodId` and pricing before initiating a transaction.
+
+## Product Details
+
+- **Product code:** `105`
+
+## Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `phoneNumber` | string | Customer's phone number |
+| `prodId` | string | Service product ID (from `/list/transport`) |
+| `amount` | number | Amount in NGN (from `/list/transport`) |
+| `pubKey` | string | User's Solana wallet public key |
+| `token` | string | `"USDT"` or `"USDC"` |
+
+## Transaction Flow
+
+<Steps>
+  <Step title="List available transport services">
+    Fetch the current catalogue of transport services from `/list/transport`. Each service includes a `prodId` and a `prodAmount` that you will pass into the transaction request.
+
+    ```bash
+    GET /api/vendor/gateway/list/transport
+    ```
+
+    Example response shape:
+
+    ```json
+    {
+      "status": "00",
+      "data": [
+        {
+          "prodId": "COWRY-TOP-UP",
+          "prodAmount": 1000,
+          "description": "Cowry Card Top-Up"
+        },
+        {
+          "prodId": "BRT-TICKET",
+          "prodAmount": 500,
+          "description": "BRT Single Ticket"
+        }
+      ]
+    }
+    ```
+
+    <Note>
+      Use the `prodAmount` from this response as the `amount` field in your transaction request. Passing a different amount will cause the transaction to fail.
+    </Note>
+  </Step>
+
+  <Step title="Initiate the transport transaction">
+    Post to `/transact` with product code `105`, the customer's phone number, and the selected service's `prodId` and `prodAmount`.
+
+    ```typescript
+    const BASE_URL = 'https://your-domain.com/api/vendor/gateway';
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'secretkey': process.env.SECRET_KEY,
+    };
+
+    // Fetch services
+    const services = await fetch(`${BASE_URL}/list/transport`, { headers });
+    const { data: serviceList } = await services.json();
+    const service = serviceList[0]; // pick desired service
+
+    // Initiate transaction
+    const response = await fetch(`${BASE_URL}/transact`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        productCode: '105',
+        payWith: 'default',
+        data: {
+          pubKey: 'user-wallet-public-key',
+          token: 'USDC',
+          amount: service.prodAmount,
+          phoneNumber: '08012345678',
+          prodId: service.prodId,
+        },
+      }),
+    });
+
+    const { data } = await response.json();
+    // data: { id, transactionIx, token, tokenMint, amountInToken }
+    ```
+
+    <Note>
+      Store `data.id` — you will need it in the final processing step after the on-chain payment is confirmed.
+    </Note>
+  </Step>
+
+  <Step title="Sign, submit, and process the transaction">
+    Deserialize the `transactionIx`, have the user sign it with their Solana wallet, broadcast it, and then call `/transact/process` to complete the ticket purchase or transit top-up.
+
+    ```typescript
+    import {
+      Transaction,
+      Connection,
+      clusterApiUrl,
+    } from '@solana/web3.js';
+
+    const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
+
+    // Deserialize and sign
+    const transaction = Transaction.from(Buffer.from(data.transactionIx, 'base64'));
+    transaction.sign(userKeypair);
+
+    // Broadcast
+    const signature = await connection.sendRawTransaction(transaction.serialize());
+
+    // Wait for confirmation
+    const latest = await connection.getLatestBlockhash({ commitment: 'confirmed' });
+    const confirmation = await connection.confirmTransaction(
+      { signature, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight },
+      'confirmed'
+    );
+
+    if (confirmation.value.err) {
+      throw new Error('On-chain transaction failed');
+    }
+
+    // Notify AirbillsPay to process delivery
+    const result = await fetch(`${BASE_URL}/transact/process`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        productCode: '105',
+        id: data.id,
+      }),
+    });
+
+    const { status, message } = await result.json();
+    ```
+
+    A `status` of `"00"` confirms that the transport ticket or top-up has been processed successfully.
+  </Step>
+</Steps>
+
+<Tip>
+  You can also pay using transfer mode: set `payWith` to `"transfer"` in the `/transact` request, send exactly `data.amountInToken` of `data.token` to `data.wallet` on Solana mainnet (the wallet expires in 10 minutes), then call `/transact/process` as shown above.
+</Tip>
+
+<Tip>
+  Need to pay electricity bills or fund a betting account for the same user? See the [Electricity guide](/guides/electricity) and the [Betting guide](/guides/betting) for the same transaction flow applied to other products.
+</Tip>

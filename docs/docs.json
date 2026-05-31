@@ -1,0 +1,86 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "AirbillsPay",
+  "theme": "luma",
+  "logo": {
+    "light": "https://media.brand.dev/4d2d09f0-4440-44d0-b8a8-086070c69c8c.svg",
+    "dark": "https://media.brand.dev/4d2d09f0-4440-44d0-b8a8-086070c69c8c.svg"
+  },
+  "favicon": "https://media.brand.dev/910932a1-5562-48da-9f50-454226568c3f.png",
+  "colors": {
+    "primary": "#26a5e4",
+    "light": "#6fc3ed",
+    "dark": "#4c4c4c"
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/airbillspay/vendor-api-example"
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "authentication"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/payment-modes",
+              "concepts/products",
+              "concepts/transaction-lifecycle"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/airtime",
+              "guides/electricity",
+              "guides/internet-data",
+              "guides/cable-tv",
+              "guides/betting",
+              "guides/transport"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Lookup",
+            "pages": [
+              "api-reference/tokens",
+              "api-reference/network-checker",
+              "api-reference/list-products",
+              "api-reference/validate-meter"
+            ]
+          },
+          {
+            "group": "Transactions",
+            "pages": [
+              "api-reference/transact",
+              "api-reference/transact-process",
+              "api-reference/transaction-history"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "api-reference/error-codes",
+              "api-reference/product-codes"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

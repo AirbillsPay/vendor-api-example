@@ -1,0 +1,98 @@
+{
+  "projectType": "api-service",
+  "projectName": "AirbillsPay",
+  "projectDescription": "A vendor gateway API that lets businesses pay bills (airtime, electricity, data, cable TV, betting, transport) on behalf of their users using USDT or USDC on Solana.",
+  "theme": "luma",
+  "primaryColor": "#26a5e4",
+  "lightColor": "#6fc3ed",
+  "darkColor": "#4c4c4c",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "authentication"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/payment-modes",
+              "concepts/products",
+              "concepts/transaction-lifecycle"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/airtime",
+              "guides/electricity",
+              "guides/internet-data",
+              "guides/cable-tv",
+              "guides/betting",
+              "guides/transport"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Lookup",
+            "pages": [
+              "api-reference/tokens",
+              "api-reference/network-checker",
+              "api-reference/list-products",
+              "api-reference/validate-meter"
+            ]
+          },
+          {
+            "group": "Transactions",
+            "pages": [
+              "api-reference/transact",
+              "api-reference/transact-process",
+              "api-reference/transaction-history"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "api-reference/error-codes",
+              "api-reference/product-codes"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Pay airtime, electricity, data, cable TV, betting, and transport bills via API",
+    "Two payment modes: wallet-signed transaction (default) and direct token transfer",
+    "Payments settled in USDT or USDC on the Solana blockchain",
+    "Lookup endpoints to fetch valid product IDs, plans, and providers before transacting",
+    "Meter validation before electricity purchases",
+    "Network detection for phone-based products",
+    "Full transaction history retrieval by vendor reference or transaction ID",
+    "Secure secret key authentication per vendor"
+  ],
+  "publicApiSurface": [
+    "POST /api/vendor/gateway/transact",
+    "POST /api/vendor/gateway/transact/process",
+    "GET /api/vendor/gateway/tokens",
+    "GET /api/vendor/gateway/network-checker",
+    "GET /api/vendor/gateway/list/internet",
+    "GET /api/vendor/gateway/list/bet",
+    "GET /api/vendor/gateway/list/cable",
+    "GET /api/vendor/gateway/list/elect",
+    "GET /api/vendor/gateway/list/transport",
+    "POST /api/vendor/gateway/validate/elect",
+    "GET /api/vendor/gateway/transaction/all",
+    "GET /api/vendor/gateway/transaction/get"
+  ]
+}

@@ -1,0 +1,168 @@
+---
+title: "Pay Electricity Bills via the AirbillsPay Vendor API"
+sidebarTitle: "Electricity"
+description: "Purchase prepaid or postpaid electricity tokens for any Nigerian DISCO using AirbillsPay. Covers meter validation, provider lookup, and code examples."
+---
+
+AirbillsPay lets you purchase electricity tokens for your users across all major Nigerian distribution companies (DISCOs). Your users pay in USDT or USDC on Solana, and AirbillsPay handles delivery of the prepaid token or postpaid credit directly to the meter. Always validate the meter number and look up the provider ID before initiating a transaction to avoid failed payments.
+
+## Product Details
+
+- **Product code:** `101`
+- **Minimum amount:** 2,000 NGN
+
+## Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `meterNo` | string | Customer's meter number |
+| `electId` | string | Electricity provider ID (from `/list/elect`) |
+| `amount` | number | Amount in NGN (min 2,000) |
+| `prodId` | string | Product type: `"prepaid"` or `"postpaid"` |
+| `pubKey` | string | User's Solana wallet public key |
+| `token` | string | `"USDT"` or `"USDC"` |
+
+## Transaction Flow
+
+<Steps>
+  <Step title="List electricity providers">
+    Fetch the current list of supported electricity distribution companies from `/list/elect`. Use the `electId` from this response when validating the meter and initiating the transaction.
+
+    ```bash
+    GET /api/vendor/gateway/list/elect
+    ```
+
+    Example response shape:
+
+    ```json
+    {
+      "status": "00",
+      "data": [
+        { "electId": "EKEDC", "name": "Eko Electricity Distribution Company" },
+        { "electId": "IKEDC", "name": "Ikeja Electric" },
+        { "electId": "AEDC",  "name": "Abuja Electricity Distribution Company" }
+      ]
+    }
+    ```
+
+    <Note>
+      Always fetch this list dynamically rather than hardcoding provider IDs. AirbillsPay may add or update providers at any time.
+    </Note>
+  </Step>
+
+  <Step title="Validate the meter number">
+    Before creating a transaction, confirm that the meter number is valid and belongs to an active account. Submit a `POST` request to `/validate/elect` with the meter number and provider ID.
+
+    ```typescript
+    const BASE_URL = 'https://your-domain.com/api/vendor/gateway';
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'secretkey': process.env.SECRET_KEY,
+    };
+
+    const validation = await fetch(`${BASE_URL}/validate/elect`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        meterNo: '12345678901',
+        electId: 'EKEDC',
+      }),
+    });
+
+    const { status, data } = await validation.json();
+
+    if (status !== '00') throw new Error('Invalid meter');
+    // data contains customer name and other account details
+    ```
+
+    <Warning>
+      Do not proceed to the transaction step if validation does not return `status: "00"`. An invalid meter number will result in a failed or unrecoverable payment.
+    </Warning>
+  </Step>
+
+  <Step title="Initiate the electricity transaction">
+    Post to `/transact` with product code `101`. Include the validated `meterNo`, the `electId`, and set `prodId` to either `"prepaid"` or `"postpaid"` to match the meter type.
+
+    ```typescript
+    const response = await fetch(`${BASE_URL}/transact`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        productCode: '101',
+        payWith: 'default',
+        data: {
+          pubKey: 'user-wallet-public-key',
+          token: 'USDC',
+          amount: 5000,
+          meterNo: '12345678901',
+          electId: 'EKEDC',
+          prodId: 'prepaid',
+          phoneNumber: '08012345678',
+        },
+      }),
+    });
+
+    const { data } = await response.json();
+    // data: { id, transactionIx, token, tokenMint, amountInToken }
+    ```
+
+    <Note>
+      Save `data.id` — you will need it when you call `/transact/process` after the on-chain payment is confirmed.
+    </Note>
+  </Step>
+
+  <Step title="Sign, submit, and process the transaction">
+    Deserialize `data.transactionIx`, have the user sign it with their Solana wallet, broadcast it to the network, and then notify AirbillsPay to deliver the electricity token.
+
+    ```typescript
+    import {
+      Transaction,
+      Connection,
+      clusterApiUrl,
+    } from '@solana/web3.js';
+
+    const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
+
+    // Deserialize and sign
+    const transaction = Transaction.from(Buffer.from(data.transactionIx, 'base64'));
+    transaction.sign(userKeypair);
+
+    // Broadcast
+    const signature = await connection.sendRawTransaction(transaction.serialize());
+
+    // Wait for confirmation
+    const latest = await connection.getLatestBlockhash({ commitment: 'confirmed' });
+    const confirmation = await connection.confirmTransaction(
+      { signature, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight },
+      'confirmed'
+    );
+
+    if (confirmation.value.err) {
+      throw new Error('On-chain transaction failed');
+    }
+
+    // Notify AirbillsPay to process delivery
+    const result = await fetch(`${BASE_URL}/transact/process`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        productCode: '101',
+        id: data.id,
+      }),
+    });
+
+    const { status, message } = await result.json();
+    ```
+
+    A `status` of `"00"` means the electricity token was delivered to the meter successfully.
+  </Step>
+</Steps>
+
+<Tip>
+  You can also pay using transfer mode: set `payWith` to `"transfer"` in the `/transact` request, send exactly `data.amountInToken` of `data.token` to `data.wallet` on Solana mainnet (the wallet expires in 10 minutes), then call `/transact/process` as shown above.
+</Tip>
+
+<Tip>
+  Need to pay other utility bills? Check out the [Airtime guide](/guides/airtime) or the [Cable TV guide](/guides/cable-tv) for similar transaction flows.
+</Tip>

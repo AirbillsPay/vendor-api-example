@@ -1,0 +1,73 @@
+---
+title: "GET /network-checker — Detect Mobile Network by Phone"
+sidebarTitle: "Network Checker"
+description: "Detect the Nigerian mobile network for a phone number before airtime or data purchases. Returns MTN, Glo, 9mobile, or Airtel to set networkId in /transact."
+---
+
+Before sending airtime or data, use this endpoint to automatically detect the recipient's mobile network. Knowing the correct network upfront lets you populate the required `networkId` field in your `/transact` request and prevents failed transactions caused by mismatched carrier details.
+
+## Endpoint
+
+```
+GET /api/vendor/gateway/network-checker
+```
+
+## Request
+
+### Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `secretkey` | ✓ | Your vendor secret key |
+
+### Query Parameters
+
+<ParamField query="phone" type="string" required>
+  The Nigerian mobile phone number to check, e.g. `"08012345678"`.
+</ParamField>
+
+## Response
+
+<ResponseField name="status" type="string">
+  `"00"` on success. Any other value indicates an error.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  A human-readable result message, e.g. `"Successful"`.
+</ResponseField>
+
+<ResponseField name="data.network" type="string">
+  The detected network name for the supplied phone number. Possible values: `"MTN"`, `"Glo"`, `"9mobile"`, `"Airtel"`.
+</ResponseField>
+
+### Example Response
+
+```json
+{ "status": "00", "message": "Successful", "data": { "network": "MTN" } }
+```
+
+## Code Example
+
+```typescript
+const params = new URLSearchParams({ phone: '08012345678' });
+const response = await fetch(`${BASE_URL}/network-checker?${params}`, {
+  headers: { 'secretkey': process.env.SECRET_KEY },
+});
+const { data } = await response.json();
+console.log(data.network); // 'MTN'
+```
+
+## Network ID Mapping
+
+After detecting the network, map the returned `network` string to the corresponding `networkId` value required by the `/transact` endpoint:
+
+| Network | `networkId` |
+|---------|-------------|
+| MTN | `"01"` |
+| Glo | `"02"` |
+| 9mobile | `"03"` |
+| Airtel | `"04"` |
+
+<Tip>
+  Pass the `networkId` from the table above in the `data` object of your `/transact` request. Skipping this step or guessing the network may cause the transaction to fail.
+</Tip>

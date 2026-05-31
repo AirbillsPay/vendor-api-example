@@ -1,0 +1,135 @@
+---
+title: "AirbillsPay Transaction Lifecycle and Status Codes"
+sidebarTitle: "Transaction Lifecycle"
+description: "Learn the two-step AirbillsPay flow: create a transaction with /transact, settle the Solana payment, then call /transact/process to fulfill the bill."
+---
+
+Every AirbillsPay bill payment follows a two-step lifecycle: first you create a pending transaction that returns the on-chain payment instruction, then — after the payment settles on Solana — you process it to trigger the actual bill fulfillment. Understanding this flow is essential for building a reliable integration, handling errors gracefully, and communicating accurate status to your users.
+
+## The Two-Step Flow
+
+```text
+POST /transact
+     │
+     ▼
+Returns { id }         ← vendorstatus: "pending"
+     │
+(Settle on-chain)
+     │
+     ▼
+POST /transact/process { productCode, id }
+     │
+     ▼
+Bill fulfilled         → vendorstatus: "completed"
+```
+
+<Steps>
+  <Step title="Create the transaction — POST /transact">
+    Submit your product details, payment mode, and user information to `POST /api/vendor/gateway/transact`. The API validates your request, creates a pending transaction record, and returns:
+
+    - A unique transaction `id` you will use throughout the rest of the lifecycle
+    - Either a `transactionIx` (base64-encoded Solana transaction) for **default mode**, or a `wallet` deposit address for **transfer mode**
+    - The `token`, `tokenMint`, and `amountInToken` the on-chain payment must use
+
+    At this point, `vendorstatus` is `"pending"`. No bill payment has occurred yet.
+  </Step>
+
+  <Step title="Settle the payment on-chain">
+    How you settle the payment depends on the mode you chose in step one:
+
+    - **Default mode** — Deserialize `transactionIx` from base64, sign it with your server wallet, and submit it to Solana mainnet. See [Payment Modes](/concepts/payment-modes) for a complete code example.
+    - **Transfer mode** — Instruct the user to send exactly `amountInToken` of `token` to the `wallet` address on Solana mainnet. The user completes this step using their own wallet app or a Solana Pay integration.
+
+    Wait for on-chain confirmation before proceeding to step three.
+
+    <Warning>
+      In transfer mode, the deposit `wallet` address expires after **10 minutes**. If the user does not complete the on-chain transfer within that window, the transaction cannot be fulfilled. Always display the deadline clearly in your UI.
+    </Warning>
+  </Step>
+
+  <Step title="Process the transaction — POST /transact/process">
+    Once the on-chain payment is confirmed, call `POST /api/vendor/gateway/transact/process` with the following body:
+
+    ```json
+    {
+      "productCode": "101",
+      "id": "vendor-transaction-uuid"
+    }
+    ```
+
+    This triggers AirbillsPay's bill payment API call to the relevant utility provider. On success, `vendorstatus` becomes `"completed"` and the bill is fulfilled.
+  </Step>
+</Steps>
+
+---
+
+## Transaction Status Values
+
+The `vendorstatus` field on a transaction record reflects where the transaction is in its lifecycle.
+
+| `vendorstatus` | Meaning |
+|----------------|---------|
+| `pending` | Transaction created, awaiting on-chain settlement and processing |
+| `completed` | Bill successfully paid |
+
+---
+
+## Response Status Codes
+
+Every API response includes a `status` field. Always check this field before proceeding to the next step in your integration.
+
+| `status` | Meaning |
+|----------|---------|
+| `"00"` | Success |
+| `"01"` | General failure |
+| `"03"` | Missing or invalid `secretkey` header |
+| `"04"` | Invalid input or unsupported `payWith` value |
+| `"06"` | Transaction already processed |
+
+---
+
+## Idempotency
+
+If you call `/transact/process` for a transaction that has already been processed, the API returns:
+
+```json
+{
+  "status": "06",
+  "message": "Transaction has already been processed"
+}
+```
+
+This protects against accidental double-billing. You can safely retry `/transact/process` if you are unsure whether a previous call succeeded — the second call will return `status: "06"` rather than charging the user again.
+
+---
+
+## Retrieving Transactions
+
+You can look up transactions at any point after creation using the two transaction history endpoints.
+
+**Retrieve a single transaction** by calling `GET /api/vendor/gateway/transaction/get` with the `id` query parameter. Use this to check the current `vendorstatus` of a specific transaction or surface payment details in your user-facing receipts.
+
+**Retrieve all transactions** by calling `GET /api/vendor/gateway/transaction/all` with your vendor reference name as the `ref` query parameter. Use this for reconciliation, auditing, or building a transaction history view.
+
+<Note>
+  Store the `id` returned by `/transact` immediately and durably in your own database. It is the single key that links the pending transaction to its on-chain settlement and final bill fulfillment.
+</Note>
+
+---
+
+## Common Pitfalls
+
+<CardGroup cols={2}>
+  <Card title="Not confirming on-chain first" icon="link-slash">
+    Calling `/transact/process` before the Solana transaction is confirmed may result in a failed fulfillment. Always wait for `confirmTransaction` (default mode) or verify the token transfer on-chain (transfer mode) before processing.
+  </Card>
+  <Card title="Missing the transfer window" icon="clock">
+    In transfer mode, the deposit wallet expires after 10 minutes. If the user delays their on-chain transfer, you will need to create a new transaction from scratch with a fresh `/transact` call.
+  </Card>
+  <Card title="Wrong amount or token" icon="circle-exclamation">
+    The user or your server must send **exactly** `amountInToken` of the specified `token`. Sending a different amount or the wrong token will cause the payment verification to fail.
+  </Card>
+  <Card title="Skipping the lookup step" icon="magnifying-glass">
+    Each product category requires valid `prodId` values from the corresponding list endpoint. Transacting with a hardcoded or stale `prodId` can cause the bill fulfillment to fail silently or return an error.
+  </Card>
+</CardGroup>

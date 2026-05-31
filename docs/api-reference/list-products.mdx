@@ -1,0 +1,207 @@
+---
+title: "List Available Products, Plans, and Service Providers"
+sidebarTitle: "List Products"
+description: "Retrieve valid product IDs and plan amounts for internet, betting, cable TV, electricity, and transport services before you initiate a /transact request."
+---
+
+Before creating a transaction for products that have predefined plans or providers — internet data, betting, cable TV, electricity, and transport — call the appropriate listing endpoint to get valid `prodId` and `prodAmount` values. Using IDs or amounts that come directly from these responses ensures your `/transact` calls reference plans that are currently active and correctly priced.
+
+<Note>
+  All listing endpoints require the `secretkey` header and accept no query parameters.
+</Note>
+
+---
+
+## GET /list/internet — List Internet Data Plans
+
+Retrieve all available mobile internet and data plans offered through AirbillsPay. Each plan object includes a `prodId` and `prodAmount` that you pass directly into your `/transact` request.
+
+### Endpoint
+
+```
+GET /api/vendor/gateway/list/internet
+```
+
+### Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `secretkey` | ✓ | Your vendor secret key |
+
+### Response
+
+<ResponseField name="status" type="string">
+  `"00"` on success. Any other value indicates an error.
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of available internet data plans. Each object contains a `prodId` and `prodAmount` to use in your `/transact` request.
+</ResponseField>
+
+### Code Example
+
+```typescript
+const response = await fetch(`${BASE_URL}/list/internet`, {
+  headers: { 'secretkey': process.env.SECRET_KEY },
+});
+const { data } = await response.json();
+// data: [{ prodId: '...', prodAmount: 1000, ... }]
+```
+
+---
+
+## GET /list/bet — List Betting Platforms
+
+Retrieve all supported betting platforms available for wallet funding. Each platform object includes a `prodId` and platform details you use when building your `/transact` request.
+
+### Endpoint
+
+```
+GET /api/vendor/gateway/list/bet
+```
+
+### Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `secretkey` | ✓ | Your vendor secret key |
+
+### Response
+
+<ResponseField name="status" type="string">
+  `"00"` on success. Any other value indicates an error.
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of supported betting platforms. Each object contains a `prodId` and platform details to use in your `/transact` request.
+</ResponseField>
+
+### Code Example
+
+```typescript
+const response = await fetch(`${BASE_URL}/list/bet`, {
+  headers: { 'secretkey': process.env.SECRET_KEY },
+});
+const { data } = await response.json();
+```
+
+---
+
+## GET /list/cable — List Cable TV Packages
+
+Retrieve all available cable TV subscription packages. Each package object includes a `prodId`, `prodAmount`, and package details.
+
+### Endpoint
+
+```
+GET /api/vendor/gateway/list/cable
+```
+
+### Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `secretkey` | ✓ | Your vendor secret key |
+
+### Response
+
+<ResponseField name="status" type="string">
+  `"00"` on success. Any other value indicates an error.
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of cable TV subscription packages. Each object contains a `prodId` and `prodAmount` to use in your `/transact` request.
+</ResponseField>
+
+### Code Example
+
+```typescript
+const response = await fetch(`${BASE_URL}/list/cable`, {
+  headers: { 'secretkey': process.env.SECRET_KEY },
+});
+const { data } = await response.json();
+```
+
+---
+
+## GET /list/elect — List Electricity Providers
+
+Retrieve all supported electricity distribution companies (DISCOs). Each provider object includes an `electId` that you pass to `POST /validate/elect` before making an electricity purchase.
+
+### Endpoint
+
+```
+GET /api/vendor/gateway/list/elect
+```
+
+### Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `secretkey` | ✓ | Your vendor secret key |
+
+### Response
+
+<ResponseField name="status" type="string">
+  `"00"` on success. Any other value indicates an error.
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of electricity distribution companies. Each object contains an `electId` you pass to `POST /validate/elect` before purchasing electricity.
+</ResponseField>
+
+### Code Example
+
+```typescript
+const response = await fetch(`${BASE_URL}/list/elect`, {
+  headers: { 'secretkey': process.env.SECRET_KEY },
+});
+const { data } = await response.json();
+```
+
+<Note>
+  Use the `electId` from this response in `POST /validate/elect` to verify a customer's meter number before calling `/transact`.
+</Note>
+
+---
+
+## GET /list/transport — List Transport Services
+
+Retrieve all available transport and logistics services. Each service object includes a `prodId`, `prodAmount`, and service details.
+
+### Endpoint
+
+```
+GET /api/vendor/gateway/list/transport
+```
+
+### Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `secretkey` | ✓ | Your vendor secret key |
+
+### Response
+
+<ResponseField name="status" type="string">
+  `"00"` on success. Any other value indicates an error.
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of available transport and logistics services. Each object contains a `prodId` and `prodAmount` to use in your `/transact` request.
+</ResponseField>
+
+### Code Example
+
+```typescript
+const response = await fetch(`${BASE_URL}/list/transport`, {
+  headers: { 'secretkey': process.env.SECRET_KEY },
+});
+const { data } = await response.json();
+```
+
+---
+
+<Tip>
+  Use the `prodId` and `prodAmount` values returned by these listing endpoints directly in the `data` object of your `/transact` request. Do not hardcode plan IDs or amounts — plans and pricing can change, and stale values will cause transaction failures.
+</Tip>

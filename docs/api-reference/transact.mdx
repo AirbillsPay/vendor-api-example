@@ -1,0 +1,299 @@
+---
+title: "POST /transact — Initiate a Bill Payment Transaction"
+sidebarTitle: "POST /transact"
+description: "POST /api/vendor/gateway/transact — initiate a bill payment. Returns a Solana transaction to sign or a deposit address for token transfer."
+---
+
+This is the primary endpoint for initiating bill payments on AirbillsPay. You POST the product details and your chosen payment mode; the API responds with the payment instruction you need to complete on-chain. Once you receive the response, proceed to sign and submit the transaction (default mode) or transfer tokens to the provided address (transfer mode), then call `/transact/process` to trigger the actual bill fulfillment.
+
+## Endpoint
+
+```
+POST /api/vendor/gateway/transact
+```
+
+## Request Headers
+
+| Header | Value |
+|--------|-------|
+| `secretkey` | `your-vendor-secret-key` |
+
+## Request Body
+
+<ParamField body="productCode" type="string" required>
+  The product code identifying the bill type to pay. Accepted values:
+
+  | Code | Product |
+  |------|---------|
+  | `"100"` | Airtime |
+  | `"101"` | Electricity |
+  | `"102"` | Internet Data |
+  | `"103"` | Betting |
+  | `"104"` | Cable TV |
+  | `"105"` | Transport |
+
+  See [Product Codes](/api-reference/product-codes) for the full reference including required fields per product.
+</ParamField>
+
+<ParamField body="payWith" type="string" required>
+  The payment mode to use. Accepted values:
+  - `"default"` — the API returns a pre-built Solana transaction (`transactionIx`) for you to sign and submit with the user's wallet.
+  - `"transfer"` — the API returns a deposit `wallet` address; you send the tokens directly to that address.
+</ParamField>
+
+<ParamField body="data" type="object" required>
+  Product-specific payment data. The fields required inside `data` vary by `productCode` — see [Product Codes](/api-reference/product-codes) for the full matrix.
+
+  <Expandable title="data fields">
+    <ParamField body="data.pubKey" type="string" required>
+      The user's Solana wallet public key. This wallet must hold enough of the selected token to cover `amountInToken`.
+    </ParamField>
+
+    <ParamField body="data.token" type="string" required>
+      The stablecoin to pay with. Accepted values: `"USDT"` or `"USDC"`.
+    </ParamField>
+
+    <ParamField body="data.amount" type="number" required>
+      The bill amount in Nigerian Naira (NGN). The API converts this to the equivalent token amount and returns it as `amountInToken`.
+    </ParamField>
+
+    <ParamField body="data.phoneNumber" type="string">
+      The recipient's phone number. Required for: Airtime (`100`), Internet Data (`102`), Cable TV (`104`), and Transport (`105`).
+    </ParamField>
+
+    <ParamField body="data.networkId" type="string">
+      The mobile network identifier. Required for Airtime (`100`) and Internet Data (`102`). Accepted values:
+
+      | `networkId` | Network |
+      |-------------|---------|
+      | `"01"` | MTN |
+      | `"02"` | Glo |
+      | `"03"` | 9mobile |
+      | `"04"` | Airtel |
+    </ParamField>
+
+    <ParamField body="data.prodId" type="string">
+      The specific product or plan ID within the selected category. Required for Electricity (`101`), Internet Data (`102`), Betting (`103`), Cable TV (`104`), and Transport (`105`). Retrieve valid IDs from the corresponding lookup endpoint before calling `/transact`.
+    </ParamField>
+
+    <ParamField body="data.meterNo" type="string">
+      The electricity meter number of the customer. Required for Electricity (`101`).
+    </ParamField>
+
+    <ParamField body="data.electId" type="string">
+      The electricity distribution company identifier. Required for Electricity (`101`). Retrieve valid values from `/list/elect`.
+    </ParamField>
+
+    <ParamField body="data.smartCardNo" type="string">
+      The cable TV smart card number. Required for Cable TV (`104`).
+    </ParamField>
+
+    <ParamField body="data.customerId" type="string">
+      The customer's betting account ID. Required for Betting (`103`).
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response — Default Mode (`payWith: "default"`)
+
+<ResponseField name="status" type="string">
+  `"00"` on success. See [Error Codes](/api-reference/error-codes) for all possible values.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  A human-readable status message, e.g. `"Successful"`.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="data fields">
+    <ResponseField name="data.id" type="string">
+      The unique transaction ID. **Save this value** — you must pass it to `/transact/process` to complete the bill payment.
+    </ResponseField>
+
+    <ResponseField name="data.transactionIx" type="string">
+      A base64-encoded Solana transaction. Decode this, sign it with the user's wallet (`data.pubKey`), and submit it to the Solana network before calling `/transact/process`.
+    </ResponseField>
+
+    <ResponseField name="data.token" type="string">
+      The token symbol used for payment, e.g. `"USDC"`.
+    </ResponseField>
+
+    <ResponseField name="data.tokenMint" type="string">
+      The Solana mint address for the selected token. Use this to verify you are working with the correct token program.
+    </ResponseField>
+
+    <ResponseField name="data.amountInToken" type="number">
+      The exact amount due in the selected token. The user's wallet must have at least this balance to sign and submit the transaction successfully.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Response — Transfer Mode (`payWith: "transfer"`)
+
+The transfer mode response shares the same shape as default mode, except `data.transactionIx` is replaced by `data.wallet`.
+
+<ResponseField name="data.wallet" type="string">
+  The Solana deposit address to send the tokens to. Send exactly `data.amountInToken` of `data.token` to this address, then call `/transact/process`.
+</ResponseField>
+
+<Warning>
+  The deposit `wallet` address returned in transfer mode **expires after 10 minutes**. Ensure the token transfer is completed and `/transact/process` is called within this window, or you will need to initiate a new `/transact` request.
+</Warning>
+
+<Note>
+  After a successful call to `/transact`, save the `data.id` value immediately. You must pass this ID to `/transact/process` to trigger the actual bill payment after the on-chain transaction is confirmed.
+</Note>
+
+---
+
+## Examples
+
+### Default Mode
+
+<CodeGroup>
+
+```json Request
+{
+  "productCode": "100",
+  "payWith": "default",
+  "data": {
+    "pubKey": "9V45GyY9AyMM5kYLzsvTZQfwm6ovzPK6oHXiaJbMCPoA",
+    "token": "USDC",
+    "amount": 500,
+    "phoneNumber": "08012345678",
+    "networkId": "01"
+  }
+}
+```
+
+```json Response
+{
+  "status": "00",
+  "message": "Successful",
+  "data": {
+    "id": "vendor-transaction-uuid",
+    "transactionIx": "base64EncodedTransaction",
+    "token": "USDC",
+    "tokenMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    "amountInToken": 0.52
+  }
+}
+```
+
+</CodeGroup>
+
+### Transfer Mode
+
+<CodeGroup>
+
+```json Request
+{
+  "productCode": "100",
+  "payWith": "transfer",
+  "data": {
+    "pubKey": "9V45GyY9AyMM5kYLzsvTZQfwm6ovzPK6oHXiaJbMCPoA",
+    "token": "USDT",
+    "amount": 500,
+    "phoneNumber": "08012345678",
+    "networkId": "01"
+  }
+}
+```
+
+```json Response
+{
+  "status": "00",
+  "message": "Successful",
+  "data": {
+    "id": "vendor-transaction-uuid",
+    "wallet": "DynamicSolanaWalletAddress",
+    "token": "USDT",
+    "tokenMint": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+    "amountInToken": 0.52
+  }
+}
+```
+
+</CodeGroup>
+
+---
+
+## TypeScript Examples
+
+### Default Mode (wallet-signed transaction)
+
+```typescript
+const BASE_URL = process.env.BASE_URL;
+
+// Step 1 — initiate the transaction
+const response = await fetch(`${BASE_URL}/transact`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'secretkey': process.env.SECRET_KEY,
+  },
+  body: JSON.stringify({
+    productCode: '100',
+    payWith: 'default',
+    data: {
+      pubKey: '9V45GyY9AyMM5kYLzsvTZQfwm6ovzPK6oHXiaJbMCPoA',
+      token: 'USDC',
+      amount: 500,
+      phoneNumber: '08012345678',
+      networkId: '01', // 01=MTN, 02=Glo, 03=9mobile, 04=Airtel
+    },
+  }),
+});
+
+const { status, message, data } = await response.json();
+
+if (status !== '00') {
+  throw new Error(`Transaction failed: ${message}`);
+}
+
+// data: { id, transactionIx, token, tokenMint, amountInToken }
+// Step 2 — sign data.transactionIx with the user's wallet, then submit it
+// to the Solana network. Once the on-chain transaction is confirmed,
+// call /transact/process with data.id to fulfil the bill payment.
+console.log('Transaction ID:', data.id);
+console.log(`Pay ${data.amountInToken} ${data.token} (mint: ${data.tokenMint})`);
+```
+
+### Transfer Mode (deposit address)
+
+```typescript
+const BASE_URL = process.env.BASE_URL;
+
+// Step 1 — initiate the transaction
+const response = await fetch(`${BASE_URL}/transact`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'secretkey': process.env.SECRET_KEY,
+  },
+  body: JSON.stringify({
+    productCode: '100',
+    payWith: 'transfer',
+    data: {
+      pubKey: '9V45GyY9AyMM5kYLzsvTZQfwm6ovzPK6oHXiaJbMCPoA',
+      token: 'USDT',
+      amount: 500,
+      phoneNumber: '08012345678',
+      networkId: '01', // 01=MTN, 02=Glo, 03=9mobile, 04=Airtel
+    },
+  }),
+});
+
+const { status, message, data } = await response.json();
+
+if (status !== '00') {
+  throw new Error(`Transaction failed: ${message}`);
+}
+
+// data: { id, wallet, token, tokenMint, amountInToken }
+// Step 2 — send exactly data.amountInToken of data.token to data.wallet
+// on-chain. The wallet address expires after 10 minutes.
+// Once the transfer is confirmed, call /transact/process with data.id.
+console.log('Transaction ID:', data.id);
+console.log(`Send ${data.amountInToken} ${data.token} to ${data.wallet}`);
+```
