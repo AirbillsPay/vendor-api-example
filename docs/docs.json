@@ -7,8 +7,8 @@
     "dark": "https://raw.githubusercontent.com/AirbillsPay/vendor-api-example/refs/heads/main/docs/images/logopng.png"
   },
   "favicon": {
-    "light": "/docs/images/logo1jpeg.jpg",
-    "dark": "/docs/images/logo1jpeg.jpg"
+    "light": "https://raw.githubusercontent.com/AirbillsPay/vendor-api-example/refs/heads/main/docs/images/logo1jpeg.jpg",
+    "dark": "https://raw.githubusercontent.com/AirbillsPay/vendor-api-example/refs/heads/main/docs/images/logo1jpeg.jpg"
   },
   "colors": {
     "primary": "#f78628",
