@@ -3,13 +3,16 @@
   "name": "Airbills",
   "theme": "luma",
   "logo": {
-    "light": "https://media.brand.dev/4d2d09f0-4440-44d0-b8a8-086070c69c8c.svg",
-    "dark": "https://media.brand.dev/4d2d09f0-4440-44d0-b8a8-086070c69c8c.svg"
+    "light": "/docs/images/logopng.png",
+    "dark": "/docs/images/logopng.png"
   },
-  "favicon": "https://media.brand.dev/910932a1-5562-48da-9f50-454226568c3f.png",
+  "favicon": {
+    "light": "/docs/images/logo1jpeg.jpg",
+    "dark": "/docs/images/logo1jpeg.jpg"
+  },
   "colors": {
-    "primary": "#26a5e4",
-    "light": "#6fc3ed",
+    "primary": "#f78628",
+    "light": "#f78628",
     "dark": "#4c4c4c"
   },
   "navbar": {
@@ -82,5 +85,13 @@
         ]
       }
     ]
+  },
+  "fonts": {
+    "family": "Poppins"
+  },
+  "footer": {
+    "socials": {
+      "x": "https://x.com/airbillspay"
+    }
   }
 }
