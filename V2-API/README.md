@@ -1,4 +1,4 @@
-# AirbillsPay Vendor Gateway API — V2
+# AirbillsPay Business Gateway API — V2
 
 Base path: `/api/vendor/gateway`
 
@@ -13,9 +13,9 @@ npm install
 Create a `.env` file in this directory:
 
 ```env
-SECRET_KEY=your-vendor-secret-key
+SECRET_KEY=your-business-secret-key
 BASE_URL=https://your-api-domain.com/api/vendor/gateway
-WALLET_PRIVATE_KEY=[1,2,3,...] # JSON array of your Solana wallet private key bytes
+WALLET_PRIVATE_KEY=your-base58-encoded-solana-private-key
 ```
 
 ---
@@ -32,10 +32,23 @@ Every request requires a `secretkey` header. This is handled automatically via t
 
 The API returns a base64-encoded Solana transaction (`transactionIx`). You sign it with the user's wallet and submit it on-chain, then call `/transact/process`.
 
+**Optional: `callbackUrl`**
+
+Pass a `callbackUrl` in the request body to receive a POST notification when the transaction is fulfilled. The payload is the transaction object directly (no `status`/`message` wrapper).
+
+```json
+{
+  "productCode": "100",
+  "payWith": "default",
+  "callbackUrl": "https://your-domain.com/webhook",
+  "data": { ... }
+}
+```
+
 **Response shape from `/transact`:**
 ```json
 {
-  "id": "vendor-transaction-uuid",
+  "id": "business-transaction-uuid",
   "transactionIx": "base64EncodedTransaction",
   "token": "USDC",
   "tokenMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
@@ -57,7 +70,7 @@ The API returns a deposit wallet address. The user sends exactly `amountInToken`
 **Response shape from `/transact`:**
 ```json
 {
-  "id": "vendor-transaction-uuid",
+  "id": "business-transaction-uuid",
   "wallet": "DynamicSolanaWalletAddress",
   "token": "USDC",
   "tokenMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
@@ -98,6 +111,39 @@ All requests also require `pubKey` (user's wallet public key) and `token` (`USDT
 
 ---
 
+## Transaction Response Fields
+
+All transaction records share these base fields:
+
+| Field          | Type   | Notes                              |
+|----------------|--------|------------------------------------|
+| `id`           | string | Transaction UUID                   |
+| `txId`         | string | Present on single-transaction fetch |
+| `signature`    | string | Present on list fetch              |
+| `txType`       | string | See values below                   |
+| `status`       | string | `Successful`, `Pending`, `Failed`  |
+| `amount`       | number | Amount in NGN                      |
+| `amountInToken`| number | Amount in USDT/USDC                |
+| `token`        | string | `USDT` or `USDC`                   |
+| `fee`          | number |                                    |
+| `pubKey`       | string | User's wallet public key           |
+| `create_at`    | string | ISO timestamp                      |
+
+Additional fields per `txType`:
+
+| `txType`      | Extra Fields |
+|---------------|--------------|
+| `airtime`     | `phoneNumber`, `networkId` |
+| `data`        | `phoneNumber`, `networkId`, `prodId` |
+| `electricity` | `electId`, `meterNo`, `metertoken`* |
+| `cable`       | `smartCardNo`, `prodId` |
+| `betting`     | `customerId`, `prodId` |
+| `transport`   | `phoneNumber`, `prodId` |
+
+> *`metertoken` is only present after a successful electricity payment.
+
+---
+
 ## Examples
 
 ### `paywith-example/index.ts` — Airtime
@@ -131,7 +177,7 @@ ts-node utility.ts
 | `listElectProviders()` | List electricity providers |
 | `listTransportServices()` | List transport services |
 | `validateMeter(meterNo, electId)` | Validate meter number before electricity purchase |
-| `getAllTransactions(ref)` | Retrieve all transactions by vendor ref name |
+| `getAllTransactions()` | Retrieve all transactions for the business |
 | `getTransactionById(id)` | Retrieve a single transaction by ID |
 
 ---

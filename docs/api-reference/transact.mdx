@@ -16,7 +16,7 @@ POST /api/vendor/gateway/transact
 
 | Header | Value |
 |--------|-------|
-| `secretkey` | `your-vendor-secret-key` |
+| `secretkey` | `your-business-secret-key` |
 
 ## Request Body
 
@@ -39,6 +39,10 @@ POST /api/vendor/gateway/transact
   The payment mode to use. Accepted values:
   - `"default"` — the API returns a pre-built Solana transaction (`transactionIx`) for you to sign and submit with the user's wallet.
   - `"transfer"` — the API returns a deposit `wallet` address; you send the tokens directly to that address.
+</ParamField>
+
+<ParamField body="callbackUrl" type="string">
+  Optional. A URL that will receive a POST request when the transaction is fulfilled. The payload is the completed transaction object directly (no `status`/`message` wrapper).
 </ParamField>
 
 <ParamField body="data" type="object" required>
@@ -171,7 +175,7 @@ The transfer mode response shares the same shape as default mode, except `data.t
   "status": "00",
   "message": "Successful",
   "data": {
-    "id": "vendor-transaction-uuid",
+    "id": "business-transaction-uuid",
     "transactionIx": "base64EncodedTransaction",
     "token": "USDC",
     "tokenMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
@@ -205,7 +209,7 @@ The transfer mode response shares the same shape as default mode, except `data.t
   "status": "00",
   "message": "Successful",
   "data": {
-    "id": "vendor-transaction-uuid",
+    "id": "business-transaction-uuid",
     "wallet": "DynamicSolanaWalletAddress",
     "token": "USDT",
     "tokenMint": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",

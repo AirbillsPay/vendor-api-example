@@ -7,7 +7,7 @@ Base path: `/api/vendor/gateway`
 Every request to this controller requires a `secretkey` header. 
 
 ```
-secretkey: <your-vendor-secret-key>
+secretkey: <your-business-secret-key>
 ```
 
 Requests without a valid key receive:
@@ -15,7 +15,7 @@ Requests without a valid key receive:
 { "status": 03, "message": "Secret key is required" }
 ```
 
-Inactive vendor accounts receive:
+Inactive business accounts receive:
 ```json
 { "status": 03, "message": "Vendor account is inactive" }
 ```
@@ -108,12 +108,12 @@ Validate a meter number before purchasing electricity.
 
 ### `POST /api/vendor/gateway/transact`
 
-Initiate a vendor bill payment transaction.
+Initiate a business bill payment transaction.
 
 
 **Request Headers:**
 ```
-secretkey: <vendor-secret-key>
+secretkey: <business-secret-key>
 ```
 
 **Request Body:**
@@ -121,6 +121,7 @@ secretkey: <vendor-secret-key>
 {
   "productCode": "100",
   "payWith": "default",
+  "callbackUrl": "https://your-domain.com/webhook",
   "data": {
     "pubKey": "User PublicKey",
     "token": "USDC",
@@ -133,9 +134,14 @@ secretkey: <vendor-secret-key>
     "meterNo": "12345678901",
     "electId": "EKEDC",
     "smartCardNo": "1234567890",
-    "customerId": "betting-account-id",
+    "customerId": "betting-account-id"
   }
 }
+```
+
+> `callbackUrl` is **optional**. When provided, the API will POST the completed transaction object to that URL once the bill payment is fulfilled. The payload is the transaction object directly (no `status`/`message` wrapper).
+
+```json
 ```
 
 **Required `data` fields per product:**
@@ -164,7 +170,7 @@ secretkey: <vendor-secret-key>
   "status": "00",
   "message": "Successful",
   "data": {
-    "id": "vendor-transaction-uuid",
+    "id": "business-transaction-uuid",
     "transactionIx": "base64EncodedTransaction",
     "token": "USDC",
     "tokenMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
@@ -180,7 +186,7 @@ secretkey: <vendor-secret-key>
   "status": "00",
   "message": "Successful",
   "data": {
-    "id": "vendor-transaction-uuid",
+    "id": "business-transaction-uuid",
     "wallet": "DynamicSolanaWalletAddress",
     "token": "USDC",
     "tokenMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
@@ -194,13 +200,13 @@ secretkey: <vendor-secret-key>
 
 ### `POST /api/vendor/gateway/transact/process`
 
-Fulfil a pending vendor transaction — triggers the actual bill payment API call.
+Fulfil a pending business transaction — triggers the actual bill payment API call.
 
 **Request Body:**
 ```json
 {
   "productCode": "100",
-  "id": "vendor-transaction-uuid"
+  "id": "business-transaction-uuid"
 }
 ```
 
@@ -222,11 +228,7 @@ Fulfil a pending vendor transaction — triggers the actual bill payment API cal
 
 ### `GET /api/vendor/gateway/transaction/all`
 
-Retrieve all transactions for the vendor by their reference name.
-
-| Query Param | Type   | Required | Description                        |
-|-------------|--------|----------|------------------------------------|
-| `ref`       | string | Yes      | Vendor name / reference identifier |
+Retrieve all transactions for the authenticated business. No query parameters required.
 
 **Response:**
 ```json
@@ -240,7 +242,7 @@ Retrieve all transactions for the vendor by their reference name.
 
 ### `GET /api/vendor/gateway/transaction/get`
 
-Retrieve a single vendor transaction by its ID.
+Retrieve a single business transaction by its ID.
 
 | Query Param | Type   | Required |
 |-------------|--------|----------|
@@ -250,27 +252,27 @@ Retrieve a single vendor transaction by its ID.
 ```json
 {
   "status": "00",
-  "data": { "id": "...", "txType": "airtime", "amount": 500, "vendorstatus": "completed" }
+  "data": { "id": "...", "txType": "airtime", "amount": 500 }
 }
 ```
 
 ---
 
-## Vendor Transaction Lifecycle
+## Business Transaction Lifecycle
 
 ```
 POST /api/vendor/gateway/transact
       │
       ▼
-  Returns { id }          ← vendorstatus: "pending"
+  Returns { id }
       │
-  (Vendor settles payment out-of-band)
+  (Business settles payment out-of-band)
       │
       ▼
 POST /api/vendor/gateway/transact/process  { productCode, id }
       │
       ▼
-  Bill API called → vendorstatus: "completed"
+  Bill API called → transaction fulfilled
 ```
 
 ---

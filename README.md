@@ -1,8 +1,8 @@
-# Airbills Vendor API — Examples
+# Airbills Business API — Examples
 
 GitHub: https://github.com/airbillspay/vendor-api-example
 
-Code examples for integrating with the Airbills Vendor Gateway API. Pay bills (airtime, data, electricity, cable TV, betting, transport) on behalf of your users using USDT or USDC on Solana.
+Code examples for integrating with the Airbills Business Gateway API. Pay bills (airtime, data, electricity, cable TV, betting, transport) on behalf of your users using USDT or USDC on Solana.
 
 As we move forward there will be changes in the documentation — to stay updated join our Telegram group: https://t.me/+tH4W4IWu4dc5ZTA0
 
@@ -38,9 +38,9 @@ npm install
 Create a `.env` file:
 
 ```env
-SECRET_KEY=your-vendor-secret-key
+SECRET_KEY=your-business-secret-key
 BASE_URL=https://your-api-domain.com/api/vendor/gateway
-WALLET_PRIVATE_KEY=[1,2,3,...] # JSON array of your Solana wallet private key bytes
+WALLET_PRIVATE_KEY=your-base58-encoded-solana-private-key
 ```
 
 Run the airtime example:

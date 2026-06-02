@@ -1,5 +1,7 @@
 import { clusterApiUrl, Connection, Keypair, Signer, Transaction } from '@solana/web3.js';
+import http from "http";
 import dotenv from "dotenv";
+import bs58 from 'bs58';
 
 dotenv.config();
 
@@ -29,6 +31,40 @@ async function post(path: string, body: object) {
   return res.json();
 }
 
+// ─── Callback server ──────────────────────────────────────────────────────────
+
+const CALLBACK_PORT = 4000;
+const CALLBACK_URL = `http://localhost:${CALLBACK_PORT}/callback`;
+
+function startCallbackServer() {
+  const server = http.createServer((req, res) => {
+    if (req.method === "POST" && req.url === "/callback") {
+      let body = "";
+      req.on("data", (chunk) => { body += chunk; });
+      req.on("end", () => {
+        console.log("\n── Callback received ──────────────────────");
+        try {
+          console.log(JSON.stringify(JSON.parse(body), null, 2));
+        } catch {
+          console.log(body);
+        }
+        console.log("───────────────────────────────────────────\n");
+        res.writeHead(200);
+        res.end("OK");
+      });
+    } else {
+      res.writeHead(404);
+      res.end();
+    }
+  });
+
+  server.listen(CALLBACK_PORT, () => {
+    console.log(`Callback server listening on ${CALLBACK_URL}`);
+  });
+
+  return server;
+}
+
 // ─── payWith: "default" ───────────────────────────────────────────────────────
 
 async function airtimeDefault() {
@@ -38,13 +74,14 @@ async function airtimeDefault() {
     const { data, message } = await post("/transact", {
       productCode: "100",
       payWith: "default",
+      callbackUrl: CALLBACK_URL,
       data: {
         pubKey: "9V45GyY9AyMM5kYLzsvTZQfwm6ovzPK6oHXiaJbMCPoA",
         token: "USDT",         // 'USDT' or 'USDC'
         amount: 10000,           // amount in NGN
         phoneNumber: "08012345678",
         networkId: "01",
-        fee: 100 // Optional
+        fee: 0 // Optional
       },
     });
 
@@ -62,21 +99,21 @@ async function airtimeDefault() {
     if (!process.env.WALLET_PRIVATE_KEY) {
       throw new Error(
         "WALLET_PRIVATE_KEY is not set in your .env file.\n" +
-        "Add it as a JSON array of your Solana wallet secret key bytes:\n" +
-        "  WALLET_PRIVATE_KEY=[12,34,56,...]"
+        "Add your Solana wallet private key:\n" +
+        "  WALLET_PRIVATE_KEY=srthrTVfew6657676"
       );
     }
     const signer: Signer = Keypair.fromSecretKey(
-      new Uint8Array(JSON.parse(process.env.WALLET_PRIVATE_KEY))
+      Uint8Array.from(bs58.decode(process.env.WALLET_PRIVATE_KEY))
     );
-    transaction.sign(signer);
+    transaction.partialSign(signer);
 
     // ── Frontend signing (wallet adapter) — use this instead of the above ──
     // const signature = await sendTransaction(transaction, connection);
 
     // Step 3 — submit to Solana and wait for confirmation
     const connection = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
-    const signature = await connection.sendRawTransaction(transaction.serialize());
+    const signature = await connection.sendRawTransaction(transaction.serialize({ verifySignatures: false }));
 
     console.log("On-chain tx submitted. Signature:", signature);
 
@@ -158,6 +195,11 @@ export async function airtimeTransfer() {
 // ─── Run ──────────────────────────────────────────────────────────────────────
 
 (async () => {
-  await airtimeDefault();
-  // await airtimeTransfer();
+  const server = startCallbackServer();
+  try {
+    await airtimeDefault();
+    // await airtimeTransfer();
+  } finally {
+    server.close();
+  }
 })();

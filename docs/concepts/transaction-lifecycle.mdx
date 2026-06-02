@@ -12,7 +12,7 @@ Every Airbills bill payment follows a two-step lifecycle: first you create a pen
 POST /transact
      │
      ▼
-Returns { id }         ← vendorstatus: "pending"
+Returns { id }
      │
 (Settle on-chain)
      │
@@ -20,7 +20,7 @@ Returns { id }         ← vendorstatus: "pending"
 POST /transact/process { productCode, id }
      │
      ▼
-Bill fulfilled         → vendorstatus: "completed"
+Bill fulfilled
 ```
 
 <Steps>
@@ -31,7 +31,7 @@ Bill fulfilled         → vendorstatus: "completed"
     - Either a `transactionIx` (base64-encoded Solana transaction) for **default mode**, or a `wallet` deposit address for **transfer mode**
     - The `token`, `tokenMint`, and `amountInToken` the on-chain payment must use
 
-    At this point, `vendorstatus` is `"pending"`. No bill payment has occurred yet.
+    At this point the transaction is pending. No bill payment has occurred yet.
   </Step>
 
   <Step title="Settle the payment on-chain">
@@ -53,11 +53,11 @@ Bill fulfilled         → vendorstatus: "completed"
     ```json
     {
       "productCode": "101",
-      "id": "vendor-transaction-uuid"
+      "id": "business-transaction-uuid"
     }
     ```
 
-    This triggers Airbills's bill payment API call to the relevant utility provider. On success, `vendorstatus` becomes `"completed"` and the bill is fulfilled.
+    This triggers Airbills's bill payment API call to the relevant utility provider. On success the bill is fulfilled and the transaction status becomes `"Successful"`.
   </Step>
 </Steps>
 
@@ -65,12 +65,13 @@ Bill fulfilled         → vendorstatus: "completed"
 
 ## Transaction Status Values
 
-The `vendorstatus` field on a transaction record reflects where the transaction is in its lifecycle.
+The `status` field on a transaction record reflects where the transaction is in its lifecycle.
 
-| `vendorstatus` | Meaning |
-|----------------|---------|
-| `pending` | Transaction created, awaiting on-chain settlement and processing |
-| `completed` | Bill successfully paid |
+| `status` | Meaning |
+|----------|---------|
+| `Pending` | Transaction created, awaiting on-chain settlement and processing |
+| `Successful` | Bill successfully paid |
+| `Failed` | Transaction failed |
 
 ---
 
@@ -107,9 +108,9 @@ This protects against accidental double-billing. You can safely retry `/transact
 
 You can look up transactions at any point after creation using the two transaction history endpoints.
 
-**Retrieve a single transaction** by calling `GET /api/vendor/gateway/transaction/get` with the `id` query parameter. Use this to check the current `vendorstatus` of a specific transaction or surface payment details in your user-facing receipts.
+**Retrieve a single transaction** by calling `GET /api/vendor/gateway/transaction/get` with the `id` query parameter. Use this to check the status of a specific transaction or surface payment details in your user-facing receipts.
 
-**Retrieve all transactions** by calling `GET /api/vendor/gateway/transaction/all` with your vendor reference name as the `ref` query parameter. Use this for reconciliation, auditing, or building a transaction history view.
+**Retrieve all transactions** by calling `GET /api/vendor/gateway/transaction/all`. No query parameters required. Use this for reconciliation, auditing, or building a transaction history view.
 
 <Note>
   Store the `id` returned by `/transact` immediately and durably in your own database. It is the single key that links the pending transaction to its on-chain settlement and final bill fulfillment.

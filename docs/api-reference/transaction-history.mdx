@@ -1,14 +1,14 @@
 ---
 title: "GET /transaction/* — Retrieve Transaction History"
 sidebarTitle: "GET /transaction/*"
-description: "Airbills transaction history endpoints let you retrieve all transactions by vendor reference or look up a single transaction by its ID."
+description: "Airbills transaction history endpoints let you retrieve all transactions for your business account or look up a single transaction by its ID."
 ---
 
-Use these endpoints to retrieve past transactions — either all transactions associated with your vendor account, or a single transaction looked up by its ID. These are useful for building transaction dashboards, reconciling payments, and checking the current status of a specific bill payment.
+Use these endpoints to retrieve past transactions — either all transactions associated with your business account, or a single transaction looked up by its ID. These are useful for building transaction dashboards, reconciling payments, and checking the current status of a specific bill payment.
 
 ## GET /transaction/all
 
-Retrieves all transactions associated with your vendor account.
+Retrieves all transactions associated with your business account. No query parameters required.
 
 ### Endpoint
 
@@ -20,13 +20,7 @@ GET /api/vendor/gateway/transaction/all
 
 | Header | Value |
 |--------|-------|
-| `secretkey` | `your-vendor-secret-key` |
-
-### Query Parameters
-
-<ParamField query="ref" type="string" required>
-  Your vendor reference name — the name associated with your vendor account when it was created.
-</ParamField>
+| `secretkey` | `your-business-secret-key` |
 
 ### Response
 
@@ -35,24 +29,34 @@ GET /api/vendor/gateway/transaction/all
 </ResponseField>
 
 <ResponseField name="data" type="array">
-  An array of transaction objects for your vendor account. Each object contains at minimum the following fields:
+  An array of transaction objects for your business account.
 
-  <Expandable title="Transaction object fields">
-    <ResponseField name="id" type="string">
-      The unique transaction ID.
-    </ResponseField>
-
+  <Expandable title="Base fields (all transaction types)">
+    <ResponseField name="id" type="string">Unique transaction UUID.</ResponseField>
+    <ResponseField name="signature" type="string">On-chain transaction signature.</ResponseField>
     <ResponseField name="txType" type="string">
-      The type of bill paid, e.g. `"airtime"`, `"electricity"`.
+      Bill type: `"airtime"`, `"data"`, `"electricity"`, `"cable"`, `"betting"`, or `"transport"`.
     </ResponseField>
+    <ResponseField name="status" type="string">`"Successful"`, `"Pending"`, or `"Failed"`.</ResponseField>
+    <ResponseField name="amount" type="number">Bill amount in NGN.</ResponseField>
+    <ResponseField name="amountInToken" type="number">Amount paid in USDT/USDC.</ResponseField>
+    <ResponseField name="token" type="string">`"USDT"` or `"USDC"`.</ResponseField>
+    <ResponseField name="fee" type="number">Transaction fee.</ResponseField>
+    <ResponseField name="pubKey" type="string">User's wallet public key.</ResponseField>
+    <ResponseField name="create_at" type="string">ISO timestamp.</ResponseField>
+  </Expandable>
 
-    <ResponseField name="amount" type="number">
-      The bill amount in NGN.
-    </ResponseField>
+  <Expandable title="Extra fields by txType">
+    | `txType` | Extra Fields |
+    |----------|-------------|
+    | `airtime` | `phoneNumber`, `networkId` |
+    | `data` | `phoneNumber`, `networkId`, `prodId` |
+    | `electricity` | `electId`, `meterNo`, `metertoken`* |
+    | `cable` | `smartCardNo`, `prodId` |
+    | `betting` | `customerId`, `prodId` |
+    | `transport` | `phoneNumber`, `prodId` |
 
-    <ResponseField name="vendorstatus" type="string">
-      The current status of the transaction, e.g. `"completed"` or `"pending"`.
-    </ResponseField>
+    *`metertoken` is only present after a successful electricity payment.
   </Expandable>
 </ResponseField>
 
@@ -62,8 +66,20 @@ GET /api/vendor/gateway/transaction/all
 {
   "status": "00",
   "data": [
-    { "id": "abc123", "txType": "airtime", "amount": 500, "vendorstatus": "completed" },
-    { "id": "def456", "txType": "electricity", "amount": 5000, "vendorstatus": "pending" }
+    {
+      "id": "abc123",
+      "signature": "5Kj9...",
+      "txType": "airtime",
+      "status": "Successful",
+      "amount": 500,
+      "amountInToken": 0.35,
+      "token": "USDC",
+      "fee": 0,
+      "pubKey": "wallet_address",
+      "phoneNumber": "08012345678",
+      "networkId": "01",
+      "create_at": "2026-06-02T10:00:00.000Z"
+    }
   ]
 }
 ```
@@ -71,9 +87,7 @@ GET /api/vendor/gateway/transaction/all
 ### TypeScript Example
 
 ```typescript
-const params = new URLSearchParams({ ref: 'your-vendor-name' });
-
-const response = await fetch(`${BASE_URL}/transaction/all?${params}`, {
+const response = await fetch(`${BASE_URL}/transaction/all`, {
   headers: { 'secretkey': process.env.SECRET_KEY },
 });
 
@@ -96,7 +110,7 @@ GET /api/vendor/gateway/transaction/get
 
 | Header | Value |
 |--------|-------|
-| `secretkey` | `your-vendor-secret-key` |
+| `secretkey` | `your-business-secret-key` |
 
 ### Query Parameters
 
@@ -111,25 +125,7 @@ GET /api/vendor/gateway/transaction/get
 </ResponseField>
 
 <ResponseField name="data" type="object">
-  A single transaction object containing at minimum the following fields:
-
-  <Expandable title="Transaction object fields">
-    <ResponseField name="id" type="string">
-      The unique transaction ID.
-    </ResponseField>
-
-    <ResponseField name="txType" type="string">
-      The type of bill paid, e.g. `"airtime"`, `"electricity"`.
-    </ResponseField>
-
-    <ResponseField name="amount" type="number">
-      The bill amount in NGN.
-    </ResponseField>
-
-    <ResponseField name="vendorstatus" type="string">
-      The current status of the transaction. Check this field to confirm whether a bill payment has been fulfilled.
-    </ResponseField>
-  </Expandable>
+  A single transaction object. Contains all base fields plus the `txId` field, and any extra fields for the specific `txType`. See the field tables above.
 </ResponseField>
 
 ### Example Response
@@ -137,19 +133,31 @@ GET /api/vendor/gateway/transaction/get
 ```json
 {
   "status": "00",
-  "data": { "id": "abc123", "txType": "airtime", "amount": 500, "vendorstatus": "completed" }
+  "data": {
+    "id": "abc123",
+    "txId": "AIR123456",
+    "txType": "airtime",
+    "status": "Successful",
+    "amount": 500,
+    "amountInToken": 0.35,
+    "token": "USDC",
+    "fee": 0,
+    "pubKey": "wallet_address",
+    "phoneNumber": "08012345678",
+    "networkId": "01",
+    "create_at": "2026-06-02T10:00:00.000Z"
+  }
 }
 ```
 
 ### TypeScript Example
 
 ```typescript
-const params = new URLSearchParams({ id: 'vendor-transaction-uuid' });
+const params = new URLSearchParams({ id: 'business-transaction-uuid' });
 
 const response = await fetch(`${BASE_URL}/transaction/get?${params}`, {
   headers: { 'secretkey': process.env.SECRET_KEY },
 });
 
 const { data } = await response.json();
-console.log(data.vendorstatus); // 'completed'
 ```

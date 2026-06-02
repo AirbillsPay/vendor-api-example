@@ -17,7 +17,7 @@ In default mode, you pass `payWith: "default"` in your `/transact` request body.
   "status": "00",
   "message": "Successful",
   "data": {
-    "id": "vendor-transaction-uuid",
+    "id": "business-transaction-uuid",
     "transactionIx": "base64EncodedTransaction",
     "token": "USDC",
     "tokenMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
@@ -30,11 +30,12 @@ In default mode, you pass `payWith: "default"` in your `/transact` request body.
 
 ```typescript
 import { Transaction, Connection, clusterApiUrl, Keypair } from '@solana/web3.js';
+import bs58 from 'bs58';
 
 // Deserialize and sign
 const transaction = Transaction.from(Buffer.from(data.transactionIx, 'base64'));
-const signer = Keypair.fromSecretKey(new Uint8Array(JSON.parse(process.env.WALLET_PRIVATE_KEY)));
-transaction.sign(signer);
+const signer = Keypair.fromSecretKey(bs58.decode(process.env.WALLET_PRIVATE_KEY));
+transaction.partialSign(signer);
 
 // Submit on-chain
 const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
@@ -59,7 +60,7 @@ In transfer mode, you pass `payWith: "transfer"` in your `/transact` request bod
   "status": "00",
   "message": "Successful",
   "data": {
-    "id": "vendor-transaction-uuid",
+    "id": "business-transaction-uuid",
     "wallet": "DynamicSolanaWalletAddress",
     "token": "USDC",
     "tokenMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
@@ -91,6 +92,25 @@ Use this table to decide which mode fits your integration:
 
 <Note>
   Regardless of which mode you choose, **both modes end the same way**: call `POST /transact/process` with `{ productCode, id }` after the on-chain payment is settled to trigger the actual bill fulfillment.
+</Note>
+
+---
+
+## Callback Notifications (Optional)
+
+Pass a `callbackUrl` in your `/transact` request body to receive a POST notification when the transaction is fulfilled. Airbills will POST the completed transaction object directly to that URL — there is no `status`/`message` wrapper.
+
+```json
+{
+  "productCode": "100",
+  "payWith": "default",
+  "callbackUrl": "https://your-domain.com/webhook",
+  "data": { ... }
+}
+```
+
+<Note>
+  `callbackUrl` is optional. If omitted, no callback is sent. Use it to update your own database or notify your users without polling the transaction history endpoints.
 </Note>
 
 ---

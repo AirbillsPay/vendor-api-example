@@ -4,6 +4,68 @@
  */
 import dotenv from "dotenv";
 
+// ─── Response Types ───────────────────────────────────────────────────────────
+
+interface GatewayResponse<T> {
+  status: string;
+  message: string;
+  data: T;
+}
+
+interface BaseTx {
+  id: string;
+  txId?: string;
+  signature?: string;
+  txType: "airtime" | "data" | "electricity" | "cable" | "betting" | "transport";
+  status: "Successful" | "Pending" | "Failed";
+  amount: number;
+  amountInToken: number;
+  token: string;
+  fee: number;
+  pubKey: string;
+  create_at: string;
+}
+
+interface AirtimeTx extends BaseTx {
+  txType: "airtime";
+  phoneNumber: string;
+  networkId: string;
+}
+
+interface DataTx extends BaseTx {
+  txType: "data";
+  phoneNumber: string;
+  networkId: string;
+  prodId: string;
+}
+
+interface ElectricityTx extends BaseTx {
+  txType: "electricity";
+  electId: string;
+  meterNo: string;
+  metertoken?: string; // present only after successful payment
+}
+
+interface CableTx extends BaseTx {
+  txType: "cable";
+  smartCardNo: string;
+  prodId: string;
+}
+
+interface BettingTx extends BaseTx {
+  txType: "betting";
+  customerId: string;
+  prodId: string;
+}
+
+interface TransportTx extends BaseTx {
+  txType: "transport";
+  phoneNumber: string;
+  prodId: string;
+}
+
+type AnyTx = AirtimeTx | DataTx | ElectricityTx | CableTx | BettingTx | TransportTx;
+
 dotenv.config();
 
 if (!process.env.SECRET_KEY) {
@@ -92,11 +154,11 @@ async function processTransaction(productCode: string, id: string) {
 
 // ─── History ──────────────────────────────────────────────────────────────────
 
-async function getAllTransactions(ref: string) {
-  return get("/transaction/all", { ref });
+async function getAllTransactions(): Promise<GatewayResponse<AnyTx[]>> {
+  return get("/transaction/all");
 }
 
-async function getTransactionById(id: string) {
+async function getTransactionById(id: string): Promise<GatewayResponse<AnyTx>> {
   return get("/transaction/get", { id });
 }
 
@@ -107,6 +169,7 @@ async function buyAirtime() {
   const { data } = await createTransaction({
     productCode: "100",
     payWith: "default",
+    callbackUrl: "https://your-domain.com/webhook", // optional
     data: {
       pubKey: "user-wallet-address",
       token: "USDC",
@@ -128,6 +191,7 @@ async function buyAirtimeTransfer() {
   const { data } = await createTransaction({
     productCode: "100",
     payWith: "transfer",
+    callbackUrl: "https://your-domain.com/webhook", // optional
     data: {
       pubKey: "user-wallet-address",
       token: "USDC",
@@ -153,6 +217,7 @@ async function buyData() {
   const { data } = await createTransaction({
     productCode: "102",
     payWith: "default",
+    callbackUrl: "https://your-domain.com/webhook", // optional
     data: {
       pubKey: "user-wallet-address",
       token: "USDC",
@@ -181,6 +246,7 @@ async function payElectricity() {
   const { data } = await createTransaction({
     productCode: "101",
     payWith: "default",
+    callbackUrl: "https://your-domain.com/webhook", // optional
     data: {
      pubKey: "user-wallet-address",
       token: "USDC",
@@ -207,6 +273,7 @@ async function fundBetting() {
   const { data } = await createTransaction({
     productCode: "103",
     payWith: "default",
+    callbackUrl: "https://your-domain.com/webhook", // optional
     data: {
       pubKey: "user-wallet-address",
       token: "USDC",
@@ -233,6 +300,7 @@ async function payCableTV() {
   const { data } = await createTransaction({
     productCode: "104",
     payWith: "default",
+    callbackUrl: "https://your-domain.com/webhook", // optional
     data: {
       pubKey: "user-wallet-address",
       token: "USDC",
@@ -260,6 +328,7 @@ async function buyTransport() {
   const { data } = await createTransaction({
     productCode: "105",
     payWith: "default",
+    callbackUrl: "https://your-domain.com/webhook", // optional
     data: {
       pubKey: "user-wallet-address",
       token: "USDC",
