@@ -16,7 +16,7 @@ POST /api/vendor/gateway/transact/process
 
 | Header | Value |
 |--------|-------|
-| `secretkey` | `your-vendor-secret-key` |
+| `secretkey` | `your-business-secret-key` |
 
 ## Request Body
 
@@ -77,7 +77,7 @@ If you call this endpoint more than once for the same transaction, the API retur
 ```json
 {
   "productCode": "100",
-  "id": "vendor-transaction-uuid"
+  "id": "business-transaction-uuid"
 }
 ```
 

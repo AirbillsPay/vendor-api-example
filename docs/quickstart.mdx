@@ -1,10 +1,10 @@
 ---
 title: "Quickstart: Pay Your First Bill with Airbills API"
 sidebarTitle: "Quickstart"
-description: "Make your first Airbills vendor API call: initiate a transaction with POST /transact, then process it with POST /transact/process."
+description: "Make your first Airbills business API call: initiate a transaction with POST /transact, then process it with POST /transact/process."
 ---
 
-This guide walks you through paying your first Nigerian utility bill using the Airbills vendor API. You'll initiate an airtime purchase with `POST /transact`, sign the resulting Solana transaction, and finalise the payment with `POST /transact/process`. The entire flow takes under five minutes once you have your secret key in hand.
+This guide walks you through paying your first Nigerian utility bill using the Airbills business API. You'll initiate an airtime purchase with `POST /transact`, sign the resulting Solana transaction, and finalise the payment with `POST /transact/process`. The entire flow takes under five minutes once you have your secret key in hand.
 
 ## Prerequisites
 
@@ -25,7 +25,7 @@ Before you begin, make sure you have:
 
     ```bash
     # .env.example
-    SECRET_KEY="your-vendor-secret-key"
+    SECRET_KEY="your-business-secret-key"
     BASE_URL="https://your-api-domain.com/api/vendor/gateway"
     ```
 

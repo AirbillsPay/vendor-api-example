@@ -1,20 +1,20 @@
 ---
 title: "API Authentication: Secret Key Setup for Airbills"
 sidebarTitle: "Authentication"
-description: "Airbills authenticates every request using a secretkey header. Learn how to get your vendor secret key and pass it correctly on every API call."
+description: "Airbills authenticates every request using a secretkey header. Learn how to get your business secret key and pass it correctly on every API call."
 ---
 
-Every request you make to the Airbills vendor gateway API must include a `secretkey` header containing your vendor secret key. There are no session tokens, OAuth flows, or cookies — authentication is a single header check on every call. If the header is missing or the key is invalid, the API rejects the request immediately with a descriptive error status.
+Every request you make to the Airbills business gateway API must include a `secretkey` header containing your business secret key. There are no session tokens, OAuth flows, or cookies — authentication is a single header check on every call. If the header is missing or the key is invalid, the API rejects the request immediately with a descriptive error status.
 
 ## Get your secret key
 
-You can obtain a vendor secret key in two ways:
+You can obtain a business secret key in two ways:
 
 - **Dashboard** — sign in at [business.airbills.org](https://business.airbills.org/) and generate a secret key from your vendor account settings. Your key is shown once, so copy it to a secure location before navigating away.
 - **Email** — send a request to [support@airbills.org](mailto:support@airbills.org) with the following details:
   - Your project name
   - Your Telegram username
-  - A Solana wallet address for your vendor account
+  - A Solana wallet address for your business account
 
 The support team will provision your account and deliver the key to you directly.
 
@@ -23,7 +23,7 @@ The support team will provision your account and deliver the key to you directly
 Include your secret key as a custom request header named `secretkey` (all lowercase, no spaces).
 
 ```http
-secretkey: your-vendor-secret-key
+secretkey: your-business-secret-key
 ```
 
 Here is how to attach the header in TypeScript using the native `fetch` API:
@@ -50,7 +50,7 @@ If authentication fails, the API returns a JSON body with a `status` code and a 
 | Status | Message | Meaning |
 |--------|---------|---------|
 | `03` | Secret key is required | The `secretkey` header is missing from the request |
-| `03` | Vendor account is inactive | Your vendor account has been deactivated — contact support to reactivate it |
+| `03` | Business account is inactive | Your business account has been deactivated — contact support to reactivate it |
 
 <Warning>
   Keep your secret key private at all times. Never expose it in client-side JavaScript, mobile app binaries, public repositories, or any place that is accessible outside your server environment. Anyone who obtains your key can make API calls charged to your account.

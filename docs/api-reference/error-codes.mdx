@@ -20,19 +20,19 @@ Every Airbills API response includes a `status` field. A status of `"00"` means 
 
 ## Authentication Errors
 
-If your `secretkey` header is missing or your vendor account has an issue, the API returns status `"03"` with one of the following messages:
+If your `secretkey` header is missing or your business account has an issue, the API returns status `"03"` with one of the following messages:
 
 **Missing secret key header:**
 ```json
 { "status": "03", "message": "Secret key is required" }
 ```
-The `secretkey` header was not included in the request. Add the header with your vendor secret key.
+The `secretkey` header was not included in the request. Add the header with your business secret key.
 
-**Inactive vendor account:**
+**Inactive business account:**
 ```json
-{ "status": "03", "message": "Vendor account is inactive" }
+{ "status": "03", "message": "Business account is inactive" }
 ```
-Your vendor account has been deactivated or is pending activation. Contact [support@airbills.org](mailto:support@airbills.org) to resolve this.
+Your business account has been deactivated or is pending activation. Contact [support@airbills.org](mailto:support@airbills.org) to resolve this.
 
 ---
 
