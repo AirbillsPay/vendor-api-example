@@ -51,7 +51,8 @@
             "pages": [
               "concepts/payment-modes",
               "concepts/products",
-              "concepts/transaction-lifecycle"
+              "concepts/transaction-lifecycle",
+              "concepts/earnings"
             ]
           },
           {
