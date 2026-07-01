@@ -40,10 +40,18 @@ GET /api/vendor/gateway/network-checker
   The detected network name for the supplied phone number. Possible values: `"MTN"`, `"Glo"`, `"9mobile"`, `"Airtel"`.
 </ResponseField>
 
+<ResponseField name="data.network_id" type="string">
+  The `networkId` value to pass directly in the `data` object of your `/transact` request. Corresponds 1:1 with `data.network` — see the [mapping table](#network-id-mapping) below.
+</ResponseField>
+
+<ResponseField name="data.error" type="string">
+  Present only when the network could not be detected for the supplied phone number. In this case, `data.network` and `data.network_id` default to `"MTN"` and `"01"` — check for `data.error` before trusting the detected network.
+</ResponseField>
+
 ### Example Response
 
 ```json
-{ "status": "00", "message": "Successful", "data": { "network": "MTN" } }
+{ "status": "00", "message": "Successful", "data": { "network": "MTN", "network_id": "01" } }
 ```
 
 ## Code Example
@@ -54,12 +62,20 @@ const response = await fetch(`${BASE_URL}/network-checker?${params}`, {
   headers: { 'secretkey': process.env.SECRET_KEY },
 });
 const { data } = await response.json();
+
+if (data.error) {
+  // Network could not be detected — data.network / data.network_id
+  // have defaulted to "MTN" / "01". Don't blindly trust them.
+  console.warn(`Could not detect network, defaulted to MTN: ${data.error}`);
+}
+
 console.log(data.network); // 'MTN'
+console.log(data.network_id); // '01'
 ```
 
 ## Network ID Mapping
 
-After detecting the network, map the returned `network` string to the corresponding `networkId` value required by the `/transact` endpoint:
+Pass `data.network_id` from the response directly in the `data` object of your `/transact` request — no manual mapping needed. For reference, it corresponds to:
 
 | Network | `networkId` |
 |---------|-------------|
@@ -69,5 +85,5 @@ After detecting the network, map the returned `network` string to the correspond
 | Airtel | `"04"` |
 
 <Tip>
-  Pass the `networkId` from the table above in the `data` object of your `/transact` request. Skipping this step or guessing the network may cause the transaction to fail.
+  Use `data.network_id` from the `/network-checker` response as-is. Skipping this step or guessing the network may cause the transaction to fail.
 </Tip>
